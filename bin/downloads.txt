@@ -1,0 +1,13 @@
+Consul: 
+ https://consul.io/downloads.html (get the Web UI as well as the binary)
+ brew install consul 
+
+Redis: 
+ http://redis.io/download
+ brew install redis 
+
+RabbitMQ: 
+ http://www.rabbitmq.com/download.html 
+ brew install rabbitmq
+ 
+
