@@ -1,0 +1,15 @@
+graphite:
+  image: hopsoft/graphite-statsd
+  ports:
+   - "80:80"
+   - "2003:2003"
+   - "8125:8125/udp"
+
+logstash:
+  image: pblittle/docker-logstash
+  environment:
+   - LOGSTASH_CONFIG_URL=https://raw.githubusercontent.com/mstine/statsd-graphite-demo/master/logstash.conf
+  ports:
+   - "10042:10042"
+   - "9292:9292"
+   - "9200:9200"
