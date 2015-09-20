@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 @SpringBootApplication
 public class DemoApplication {
 
-
     @Bean
     AlwaysSampler alwaysSampler() {
         return new AlwaysSampler();
