@@ -25,6 +25,11 @@
 
 ## Client-Side Load Balancing
 
+ - we'll setup the Eureka `DiscoveryClient` using the `Eureka Server` support
+ - we'll setup Consul `DiscoveryClient`. This implies some complexity because of Docker. For the whole thing to work, be sure to add `127.0.0.1	localhost cna`, where `cna` is the host that - inside to the Docker container for Consul - resolves to the host OS (OSX, Linux, whatever) and to our running applications. Consul
+ will be able to ping health checks and so on. Externally, this DNS resolves to nothing, and when the `reservation-client` calls the `reservation-service`, Ribbon
+ will route to something that it doesn't know about. So restart Intellij to make it see the updated routing table.
+
 ## Circuit Breaker
 
 ## Tracing
