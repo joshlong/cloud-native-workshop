@@ -10,7 +10,7 @@
 - go to the [Spring Initializr](http://start.spring.io) and specify the latest milestone of Spring Boot 1.3 and then choose EVERY checkbox except those related to AWS, then click generate. In the shell, run `mvn -DskipTests=true clean install` to force the resolution of all those dependencies so you're not stalled later. Then, run `mvn clean install` to force the resolution of the test scoped dependencies. You may discard this project after you've `install`ed everything.
 - run each of the `.sh` scripts in the `./bin` directory; run `psql.sh` after you've run `postgresh.sh` and confirm that they all complete and emit no obvious errors
 
-## "Bootcamp"
+## 1. "Bootcamp"
 
 > in this lab we'll take a look at building a basic Spring Boot application that uses JPA and Spring Data REST. We'll look at how to start a new project, how Spring Boot exposes functionality, and how testing works.
 
@@ -97,25 +97,28 @@
 - launch a browser and visit the `reservation-client` in the browser under the context path `/reservation-service/reservations`.
 
 ## Streams
+> while REST is an east, powerful approach to building services, it doesn't provide much in the way of guarantees about state. A failed write needs to be retried, requiring more work of the client. Messaging, on the other hand, guarantees that _eventually_ the intended write will be processed. Eventual consistency works most of the time; even banks don't use distributed transactions! In this lab, we'll look at Spring Cloud Stream which builds atop Spring Integration and the messaging subsystem from Spring XD. Spring Cloud Stream provides the notion of _binders_ that automatically wire up message egress and ingress given a valid connection factory and an agreed upon destination (e.g.: `reservations` or `orders`).
+
 - start `./bin/rabbitmq.sh`
 
-> Sources
+> Sources - like water from a faucet - describe where messages may come from. In our example, messages come from the `reservation-client` that wishes to write messages to the `reservation-service` from the API gateway.
 
 - add `org.springframework.cloud`:`spring-cloud-starter-stream-binder-rabbit`
-- add `@EnableBinding(Source.class)` to the `reservation-client` `DemoApplication` to signal that messages will flow _from_ this module (like a source of water such as a kitchen sink faucet)
+- add `@EnableBinding(Source.class)` to the `reservation-client` `DemoApplication`
 - create a new REST endpoint in the `ReservationNamesRestController` to accept new reservations by reservation-name
 - observe that the `Source.class` describes one or more Spring `MessageChannel`s which are themselves annotated with useful qualifiers like `@Output("output")`.
 - in the new endpoint, inject the Spring `MessageChannel` and qualify it with `@Output("output")` - the same one as in the `Source.class` definition.
 - use the `MessageChannel` to send a message to the `reservation-service`. Connect the two modules through a agreed upon name, which we'll call `reservations`.
-- Observe that this is specified in the config server for us in the `reservation-service` module: `spring.cloud.stream.bindings.output=reservations`
+- Observe that this is specified in the config server for us in the `reservation-service` module: `spring.cloud.stream.bindings.output=reservations`. `output` is arbitrary and refers to the (arbitrary) channel of the same name described and referenced from the `Source.class` definition.
 
-> Sinks
+> Sinks receive messages that flow _to_ this service (like the kitchen sink into which water from the faucet flows).
 
-- add `@EnableBinding(Sink.class)` to the `reservation-service`  `DemoApplication` to signal that messages may flow _to_ this service (like the kitchen sink into which water from the faucet flows)
+- add `org.springframework.cloud`:`spring-cloud-starter-stream-binder-rabbit` to the `reservation-service` `DemoApplication`
+- add `@EnableBinding(Sink.class)` to the `reservation-service`  `DemoApplication`
 - observe that the `Sink.class` describes one or more Spring `MessageChannel`s which are themselves annotated with useful qualifiers like `@Input("input")`.
 - create a new `@MessagingEndpoint` that has a `@ServiceActivator`-annotated handler method to receive messages whose payload is of type `String`, the `reservationName` from the `reservation-client`.  
 - use the `String` to save new `Reservation`s using an injected `ReservationRepository`
-- Observe that this is specified in the config server for us in the `reservation-client` module: `spring.cloud.stream.bindings.input=reservations`
+- Observe that this is specified in the config server for us in the `reservation-client` module: `spring.cloud.stream.bindings.input=reservations`. `input` is arbitrary and refers to the (arbitrary) channel of the same name described and referenced from the `Sink.class` definition.
 
 
 ## Logging & distributed tracing with ELK and Zipkin
