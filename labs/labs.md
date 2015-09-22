@@ -14,7 +14,7 @@
 
 > in this lab we'll take a look at building a basic Spring Boot application that uses JPA and Spring Data REST. We'll look at how to start a new project, how Spring Boot exposes functionality, and how testing works.
 
-- go to the [Spring Initializr](http://start.spring.io) and select JPA, Vaadin, Web. Select the latest Spring Boot 1.3 MILESTONE version. give it an `artifatId` of `reservation-service`.
+- go to the [Spring Initializr](http://start.spring.io) and select H2, REST Repositoroes, JPA, Vaadin, Web. Select the latest Spring Boot 1.3 MILESTONE version. give it an `artifactId` of `reservation-service`.
 - Run `mvn clean install` and import it into your favorite IDE using Maven import.
 - add a simple entity (`Reservation`) and a repository (`ReservationRepository`)
 - map the repository to the web by adding  `org.springframework.boot`:`spring-boot-starter-data-rest` and then annotating the repository with `@RepositoryRestResource`
