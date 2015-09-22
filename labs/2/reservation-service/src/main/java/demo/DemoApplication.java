@@ -69,17 +69,6 @@ public class DemoApplication {
         @Autowired
         private CounterService counterService;
 
-        void count(String evt, Reservation p) {
-//            LogstashMarker logstashMarker = Markers.append("event", evt)
-//                    .and(Markers.append("reservationName", p.getReservationName()))
-//                    .and(Markers.append("id", p.getId()));
-//
-//            LOGGER.info(logstashMarker, evt);
-
-            this.counterService.increment(evt);
-            this.counterService.increment("meter." + evt);
-        }
-
         @HandleAfterCreate
         public void create(Reservation p) {
             count("reservations.create", p);
@@ -94,6 +83,17 @@ public class DemoApplication {
         @HandleAfterDelete
         public void delete(Reservation p) {
             count("reservations.delete", p);
+        }
+
+        protected void count(String evt, Reservation p) {
+//            LogstashMarker logstashMarker = Markers.append("event", evt)
+//                    .and(Markers.append("reservationName", p.getReservationName()))
+//                    .and(Markers.append("id", p.getId()));
+//
+//            LOGGER.info(logstashMarker, evt);
+
+            this.counterService.increment(evt);
+            this.counterService.increment("meter." + evt);
         }
     }
 

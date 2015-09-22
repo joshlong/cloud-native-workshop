@@ -21,6 +21,11 @@
 - add custom Hypermedia links
 - write a simple unit test
 
+### Questions:
+- why `.jar`s and not `.war`s? We've found that many organizations deploy only one, not many, application to one Tomcat/Jetty/whatever. They need to configure things like SSL, or GZIP compression, so they end up doing that in the container itself and - because they don't want the versioned configuration for the server to drift out of sync with the code, they end up version controlling the application server artifacts as well as the application itself! This implies a needless barrier between dev and ops which we struggle in every other place to remove.   
+- how do I access the `by-name` search endpoint? Follow the links! visit `http://localhost:8080/reservations` and scroll down and you'll see _link_s that connect you to related resources. You'll see one for `search`. Follow it, find the relevant finder method, and then follow its link.
+
+
 ## 2. Making a Spring Boot application Production Ready
 
 > Code complete != production ready! If you've ever read Michael Nygard's amazing tome, _Release It!_, then you know that the last mile between being code complete and being to production is _much_ longer than anyone ever anticipates. In this lab, we'll look at how Spring Boot is optimized for the continuous delivery of applications into production.
@@ -47,7 +52,7 @@
 > the [12 Factor](http://12factor.net/config) manifesto speaks about externalizing that which changes from one environment to another - hosts,  locators, passwords, etc. - from the application itself. Spring Boot readily supports this pattern, but it's not enough. In this lab, we'll loko at how to centralize, externalize, and dynamically update application configuration with the Spring Cloud Config Server.
 
 - go to the Spring Initializr, Specify an `artifactId` of `config-server` and check the `Config Server` checkbox.
-- In `application.properties` for the Config Server, point the new module to the configuration in our custom Git repository with the property `spring.cloud.config.server.git.uri`.
+- In `application.properties` for the Config Server, point the new module to the configuration in our custom Git repository with the property `spring.cloud.config.server.git.uri` in `application.properties`.
 - Add `server.port=8888` in `application.properties` to ensure that the Config Server is running on the right port for service to find it.
 - add the Spring Cloud BOM to the `reservation-service`.
 - add `org.springframework.cloud`:`spring-cloud-starter-config` to the `reservation-service`.
