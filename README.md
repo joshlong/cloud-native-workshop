@@ -21,21 +21,25 @@
 - add custom Hypermedia links
 - write a simple unit test
 
-## Making a Spring Boot application Production Ready
+## 2. Making a Spring Boot application Production Ready
 
 > Code complete != production ready! If you've ever read Michael Nygard's amazing tome, _Release It!_, then you know that the last mile between being code complete and being to production is _much_ longer than anyone ever anticipates. In this lab, we'll look at how Spring Boot is optimized for the continuous delivery of applications into production.
 
+
 - add `org.springframework.boot`:`spring-boot-starter-actuator`
 - customize the `HealthEndpoint` by contributing a custom `HealthIndicator`
-- start `./bin/graphite.sh`
-- add a `GraphiteMetricsWriter`
-- add the Dropwizard Metrics Library
-- add a semantic metric using `CounterService` and observe the histogram
+- start `./bin/graphite.sh` and `./bin/elk.sh`
+- configure two environment variables `GRAPHITE_HOST` (`export GRAPHITE_HOST="$DOCKER_IP"`) and `GRAPHITE_PORT` (`2003`) (you may need to restart your IDE to _see_ these new environment variables)
+- add a `GraphiteReporter` bean
+- add `io.dropwizard.metrics`:`metrics-graphite`
 - build an executable `.jar` (UNIX-specific) using the `<executable/>` configuration flag
 - use the HAL browser
-- add `info.build.artifact=${project.artifactId}` and `info.build.version=${project.version}`  to `application.properties`.
 - configure Maven resource filtering and the Git commit ID plugin in the `pom.xml` in all existing and subsequent `pom.xml`s, or extract out a common parent `pom.xml` that all modules may extend.
+- add the Git commit ID Maven plugin
+- add `info.build.artifact=${project.artifactId}` and `info.build.version=${project.version}`  to `application.properties`.
 - introduce a new `@RepositoryEventHandler` and `@Component`. Provide handlers for `@HandleAfterCreate`, `@HandleAfterSave`, and `@HandleAfterDelete`. Extract common counters to a shared method
+- add a semantic metric using `CounterService` and observe the histogram in Graphite
+
 
 
 ## Use the Config Server
