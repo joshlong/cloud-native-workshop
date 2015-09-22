@@ -3,8 +3,6 @@ package demo;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteReporter;
-import net.logstash.logback.marker.LogstashMarker;
-import net.logstash.logback.marker.Markers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,11 +70,11 @@ public class DemoApplication {
         private CounterService counterService;
 
         void count(String evt, Reservation p) {
-            LogstashMarker logstashMarker = Markers.append("event", evt)
-                    .and(Markers.append("reservationName", p.getReservationName()))
-                    .and(Markers.append("id", p.getId()));
-
-            LOGGER.info(logstashMarker, evt);
+//            LogstashMarker logstashMarker = Markers.append("event", evt)
+//                    .and(Markers.append("reservationName", p.getReservationName()))
+//                    .and(Markers.append("id", p.getId()));
+//
+//            LOGGER.info(logstashMarker, evt);
 
             this.counterService.increment(evt);
             this.counterService.increment("meter." + evt);
