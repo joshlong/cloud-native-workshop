@@ -36,14 +36,13 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 - add `org.springframework.boot`:`spring-boot-starter-actuator`
 - customize the `HealthEndpoint` by contributing a custom `HealthIndicator`
-- start `./bin/graphite.sh` and `./bin/elk.sh`
+- start `./bin/graphite.sh`  
 - configure two environment variables `GRAPHITE_HOST` (`export GRAPHITE_HOST="$DOCKER_IP"`) and `GRAPHITE_PORT` (`2003`) (you may need to restart your IDE to _see_ these new environment variables)
 - add a `GraphiteReporter` bean
 - add `io.dropwizard.metrics`:`metrics-graphite`
 - build an executable `.jar` (UNIX-specific) using the `<executable/>` configuration flag
 - use the HAL browser
 - configure Maven resource filtering and the Git commit ID plugin in the `pom.xml` in all existing and subsequent `pom.xml`s, or extract out a common parent `pom.xml` that all modules may extend.
-- add the Git commit ID Maven plugin
 - add `info.build.artifact=${project.artifactId}` and `info.build.version=${project.version}`  to `application.properties`.
 - introduce a new `@RepositoryEventHandler` and `@Component`. Provide handlers for `@HandleAfterCreate`, `@HandleAfterSave`, and `@HandleAfterDelete`. Extract common counters to a shared method
 - add a semantic metric using `CounterService` and observe the histogram in Graphite
@@ -66,27 +65,21 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 - In the `reservation-service`, create a `MessageRestController` and annotate it with `@RefreshScope`. Inject the `${message}` key and expose it as a REST endpoint, `/message`.
 - trigger a refresh of the message using the `/refresh` endpoint.
-- start `./bin/rabbitmq.sh`
-- connect the microservice to the event bus using RabbitMQ and by adding the `org.springframework.cloud`:`spring-cloud-starter-bus-amqp` then triggering the refresh using the `/bus/refresh`.
+- **EXTRA CREDIT**: start `./bin/rabbitmq.sh` and connect the microservice to the event bus using RabbitMQ and by adding the `org.springframework.cloud`:`spring-cloud-starter-bus-amqp` then triggering the refresh using the `/bus/refresh`.
 
-## Service Registration and Discovery
+## 4. Service Registration and Discovery
 
 > In the cloud, applications live and die as capacity dictates, they're ephemeral. Applications should not be coupled to the physical location of other services as this state is fleeting. Indeed, even if it were fixed, services may quickly become overwhelmed, so it's very handy to be able to specify how to load balance among the available instances or indeed ask the system to verify that there are instances at all. In this lab, we'll look at the low-level `DiscoveryClient` abstraction at the heart of Spring Cloud's service registration and discovery support.
 
 - go to the Spring Initializr and stand up a Eureka server by creating a new module called `Eureka Server` and adding `@EnableEurekaServer`.
 - Make sure this module _also_ talks to the Config Server as described in the last lab.
 - identify the service as `eureka-server`.
-- add `@EnableDiscoveryClient` to the `reservation-service` and restart, and then confirm its appearance in the Eureka Server
+- add `@EnableDiscoveryClient` to the `reservation-service`'s `DemoApplication` and restart the process, and then confirm its appearance in the Eureka Server at `http://localhost:8761`
 - demonstrate using the `DiscoveryClient` API
 - use the Spring Initializr, setup a new module, `reservation-client`, that uses the Config Server, Eureka Discovery, and Web.
+- create a `bootstrap.properties`, just as with the other modules, but name this one `reservation-client`.
 - create a `CommandLineRunner` that uses the `DiscoveryClient` to look up other services programatically
 - **EXTRA CREDIT**: install [Consul](http://Consul.io) and replace Eureka with Consul. You could use `./bin/consul.sh`, but prepare yourself for some confusion around host resolution if you're running Docker inside a Vagrant VM.
-
-<!--
-# CHECKPOINT # 1
-- remove the `CommandLineRunner` that injects the `DiscoveryClient` from `reservation-client`.
-- The code as it stands at this point will be the starting point for all subsequent exercises. I recommend you create new working directories for each lab and just copy in the `reservation-service`, `eureka-service`, `config-service` and `reservation-client` as they stand now, each time. We _could_ combine everything we're about to look at and just incrementally add everything to one giant example, but this will require quite a few moving parts (not to mention human and computer memory!) It's safer and more approachable to do small focused examples and then - as you need to in real-world development - pick and choose which combinations you need.
--->
 
 ## Edge Services: API gateways (circuit breakers, client-side load balancing)
 > API gateways are used whenever a client - like a mobile phone or HTML5 client - requires API translation. Perhaps the client requires coarser grained payloads, or transformed views on
