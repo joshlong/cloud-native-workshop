@@ -41,7 +41,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - add a `GraphiteReporter` bean
 - add `io.dropwizard.metrics`:`metrics-graphite`
 - build an executable `.jar` (UNIX-specific) using the `<executable/>` configuration flag
-- use the HAL browser
+- add the HAL browser - `org.springframework.data`:`spring-data-rest-hal-browser` and view the Actuator endpoints using that
 - configure Maven resource filtering and the Git commit ID plugin in the `pom.xml` in all existing and subsequent `pom.xml`s, or extract out a common parent `pom.xml` that all modules may extend.
 - add `info.build.artifact=${project.artifactId}` and `info.build.version=${project.version}`  to `application.properties`.
 - introduce a new `@RepositoryEventHandler` and `@Component`. Provide handlers for `@HandleAfterCreate`, `@HandleAfterSave`, and `@HandleAfterDelete`. Extract common counters to a shared method
