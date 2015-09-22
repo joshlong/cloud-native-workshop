@@ -1,5 +1,7 @@
 # Cloud Native Java Workshop
 
+The accompanying code for this workshop is [on Github](http://github.com/joshlong/cloud-native-workshop)
+
 ## Setup  
 
 > microservices, for better or for worse, involve a lot of moving parts. Let's make sure we can run all those things in this lab.
@@ -22,8 +24,10 @@
 - write a simple unit test
 
 ### Questions:
+- what is Spring? Spring, fundamentally, is a dependency injection container. This detail is unimportant. What is important is that once Spring is aware of all the objects - _beans_ - in an application, it can provide services to them to support different use cases like persistence, web services, web applications, messaging and integration, etc. 
 - why `.jar`s and not `.war`s? We've found that many organizations deploy only one, not many, application to one Tomcat/Jetty/whatever. They need to configure things like SSL, or GZIP compression, so they end up doing that in the container itself and - because they don't want the versioned configuration for the server to drift out of sync with the code, they end up version controlling the application server artifacts as well as the application itself! This implies a needless barrier between dev and ops which we struggle in every other place to remove.   
 - how do I access the `by-name` search endpoint? Follow the links! visit `http://localhost:8080/reservations` and scroll down and you'll see _link_s that connect you to related resources. You'll see one for `search`. Follow it, find the relevant finder method, and then follow its link.
+
 
 
 ## 2. Making a Spring Boot application Production Ready
