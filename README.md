@@ -24,7 +24,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - write a simple unit test
 
 ### Questions:
-- what is Spring? Spring, fundamentally, is a dependency injection container. This detail is unimportant. What is important is that once Spring is aware of all the objects - _beans_ - in an application, it can provide services to them to support different use cases like persistence, web services, web applications, messaging and integration, etc. 
+- what is Spring? Spring, fundamentally, is a dependency injection container. This detail is unimportant. What is important is that once Spring is aware of all the objects - _beans_ - in an application, it can provide services to them to support different use cases like persistence, web services, web applications, messaging and integration, etc.
 - why `.jar`s and not `.war`s? We've found that many organizations deploy only one, not many, application to one Tomcat/Jetty/whatever. They need to configure things like SSL, or GZIP compression, so they end up doing that in the container itself and - because they don't want the versioned configuration for the server to drift out of sync with the code, they end up version controlling the application server artifacts as well as the application itself! This implies a needless barrier between dev and ops which we struggle in every other place to remove.   
 - how do I access the `by-name` search endpoint? Follow the links! visit `http://localhost:8080/reservations` and scroll down and you'll see _link_s that connect you to related resources. You'll see one for `search`. Follow it, find the relevant finder method, and then follow its link.
 
@@ -33,7 +33,6 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 ## 2. Making a Spring Boot application Production Ready
 
 > Code complete != production ready! If you've ever read Michael Nygard's amazing tome, _Release It!_, then you know that the last mile between being code complete and being to production is _much_ longer than anyone ever anticipates. In this lab, we'll look at how Spring Boot is optimized for the continuous delivery of applications into production.
-
 
 - add `org.springframework.boot`:`spring-boot-starter-actuator`
 - customize the `HealthEndpoint` by contributing a custom `HealthIndicator`
@@ -51,16 +50,17 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 
 
-## Use the Config Server
+##  3. the Config Server
 
 > the [12 Factor](http://12factor.net/config) manifesto speaks about externalizing that which changes from one environment to another - hosts,  locators, passwords, etc. - from the application itself. Spring Boot readily supports this pattern, but it's not enough. In this lab, we'll loko at how to centralize, externalize, and dynamically update application configuration with the Spring Cloud Config Server.
 
-- go to the Spring Initializr, Specify an `artifactId` of `config-server` and check the `Config Server` checkbox.
+- go to the Spring Initializr, choose the latest milestone of Spring Boot 1.3, specify an `artifactId` of `config-server` and check the `Config Server` checkbox.
 - In `application.properties` for the Config Server, point the new module to the configuration in our custom Git repository with the property `spring.cloud.config.server.git.uri` in `application.properties`.
 - Add `server.port=8888` in `application.properties` to ensure that the Config Server is running on the right port for service to find it.
-- add the Spring Cloud BOM to the `reservation-service`.
+- add the Spring Cloud BOM (you can copy it from the Config Server) to the `reservation-service`.
 - add `org.springframework.cloud`:`spring-cloud-starter-config` to the `reservation-service`.
 - create a `boostrap.properties` that lives in the same place as `application.properties` and discard the `application.properties` file. Instead, we now need only tell the Spring application where to find the Config Server, with `spring.cloud.config.uri=${config.server:http://localhost:8888}`, and how to identify itself to the Config Server and other services, later, with `spring.application.name`.
+- Run the Config Server
 
 > We'll copy and paste  `bootstrap.properties` for each subsequent module, changing only the `spring.application.name` as appropriate.
 
