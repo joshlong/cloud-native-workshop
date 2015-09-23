@@ -72,12 +72,11 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > In the cloud, applications live and die as capacity dictates, they're ephemeral. Applications should not be coupled to the physical location of other services as this state is fleeting. Indeed, even if it were fixed, services may quickly become overwhelmed, so it's very handy to be able to specify how to load balance among the available instances or indeed ask the system to verify that there are instances at all. In this lab, we'll look at the low-level `DiscoveryClient` abstraction at the heart of Spring Cloud's service registration and discovery support.
 
-- go to the Spring Initializr and stand up a Eureka server by creating a new module called `Eureka Server` and adding `@EnableEurekaServer`.
-- Make sure this module _also_ talks to the Config Server as described in the last lab.
-- identify the service as `eureka-service`.
+- go to the Spring Initializr, select the `Eureka Server` checkbox, name it `eureka-service` and then add `@EnableEurekaServer` to the `DemoApplication` class.
+- Make sure this module _also_ talks to the Config Server as described in the last lab by adding the `org.springframework.cloud`:`spring-cloud-starter-config`.
 - add `@EnableDiscoveryClient` to the `reservation-service`'s `DemoApplication` and restart the process, and then confirm its appearance in the Eureka Server at `http://localhost:8761`
 - demonstrate using the `DiscoveryClient` API
-- use the Spring Initializr, setup a new module, `reservation-client`, that uses the Config Server, Eureka Discovery, and Web.
+- use the Spring Initializr, setup a new module, `reservation-client`, that uses the Config Server, Eureka Discovery, and Web. This will bring in `org.springframework.cloud`:`spring-cloud-starter-eureka`
 - create a `bootstrap.properties`, just as with the other modules, but name this one `reservation-client`.
 - create a `CommandLineRunner` that uses the `DiscoveryClient` to look up other services programatically
 - **EXTRA CREDIT**: install [Consul](http://Consul.io) and replace Eureka with Consul. You could use `./bin/consul.sh`, but prepare yourself for some confusion around host resolution if you're running Docker inside a Vagrant VM.
