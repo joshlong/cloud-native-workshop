@@ -6,7 +6,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > microservices, for better or for worse, involve a lot of moving parts. Let's make sure we can run all those things in this lab.
 
-- you will need JDK 8, Maven, an IDE and Docker in order to follow along. Specify important environment variables before opening any IDEs: `JAVA_HOME`, `DOCKER_IP` and `DOCKER_HOST_IP`.
+- you will need JDK 8, Maven, an IDE and Docker in order to follow along. Specify important environment variables before opening any IDEs: `JAVA_HOME`, `DOCKER_HOST`.
 - Install [the Spring Boot CLI](http://docs.spring.io/autorepo/docs/spring-boot/current/reference/html/getting-started-installing-spring-boot.html#getting-started-installing-the-cli) and [the Spring Cloud CLI](https://github.com/spring-cloud/spring-cloud-cli).
 - [Install the Cloud Foundry CLI](https://docs.cloudfoundry.org/devguide/installcf/install-go-cli.html)
 - go to the [Spring Initializr](http://start.spring.io) and specify the latest milestone of Spring Boot 1.3 and then choose EVERY checkbox except those related to AWS, then click generate. In the shell, run `mvn -DskipTests=true clean install` to force the resolution of all those dependencies so you're not stalled later. Then, run `mvn clean install` to force the resolution of the test scoped dependencies. You may discard this project after you've `install`ed everything.
@@ -82,26 +82,33 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - create a `CommandLineRunner` that uses the `DiscoveryClient` to look up other services programatically
 - **EXTRA CREDIT**: install [Consul](http://Consul.io) and replace Eureka with Consul. You could use `./bin/consul.sh`, but prepare yourself for some confusion around host resolution if you're running Docker inside a Vagrant VM.
 
-## Edge Services: API gateways (circuit breakers, client-side load balancing)
-> API gateways are used whenever a client - like a mobile phone or HTML5 client - requires API translation. Perhaps the client requires coarser grained payloads, or transformed views on
+## 5. Edge Services: API gateways (circuit breakers, client-side load balancing)
+> Edge services sit as intermediaries between the clients (smart phones, HTML5 applications, etc) and the service. An edge service is a logical place to insert any client-specific requirements (security, API translation, protocol translation) and keep the mid-tier services free of this burdensome logic (as well as free from associated redeploys!)
 
-- create a client side DTO to hold the `Reservation` data from the service. Do this to avoid being coupled between client and service
-- add a REST service called `ReservationNamesRestController` that uses the `@Autowired @LoadBalanced RestTemplate rt` to make a load-balanced call to a service in the registry using Ribbon.
+> Proxy requests from an edge-service to mid-tier services with a _microproxy_. For some classes of clients, a microproxy and security (HTTPS, authentication) might be enough.
+
+- add `org.springframework.cloud`:`spring-cloud-starter-zuul` and `@EnableZullProxy` to the `reservation-client`, then run it.
+- launch a browser and visit the `reservation-client` at `http://localhost:9999/reservation-service/reservations`. This is proxying your request to `http://localhost:8000/reservations`.
+
+> API gateways are used whenever a client - like a mobile phone or HTML5 client - requires API translation. Perhaps the client requires coarser grained payloads, or transformed views on the data
+
+- In the `reservation-service`, create a client side DTO - named `Reservation`, perhaps? - to hold the `Reservation` data from the service. Do this to avoid being coupled between client and service
 - add `org.springframework.boot`:`spring-boot-starter-hateoas`
-- make a call to `http://reservation-service/reservations` using the `RestTemplate#exchange` method, specifying the return value with a `ParameterizedTypeReference<Resources<Reservation>>>` as the final argument to the `RestTemplate#exchange` method.
-- take the results of the call and map them from `Reservation` to `Reservation#getReservationName` and return them from a REST endpoint, `/reservations/names`.
-- add `@EnableCircuitBreaker` to our configuration class
-- add `@HystrixCommand` around any potentially shaky service-to-service calls like the `RestTemplate` call in the last lab.
-- go to the [Spring Initializr](http://start.spring.io) and stand up a new service that uses Eureka Discovery, Config Client, and the Hystrix Dashboard.
-- identify it is as `hystrix-dashboard` in `bootstrap.properties`
-- annotate it with `@EnableHystrixDashboard` and run it.
+- add a REST service called `ReservationApiGatewayRestController` that uses the `@Autowired @LoadBalanced RestTemplate rt` to make a load-balanced call to a service in the registry using Ribbon.
+- map the controller itself to `/reservations` and then create a new controller handler method, `getReservationNames`, that's mapped to `/names`.
+- in the `getReservationNames` handler, make a call to `http://reservation-service/reservations` using the `RestTemplate#exchange` method, specifying the return value with a `ParameterizedTypeReference<Resources<Reservation>>>` as the final argument to the `RestTemplate#exchange` method.
+- take the results of the call and map them from `Reservation` to `Reservation#getReservationName`. Then, confirm that `http://localhost:9999/reservations/names` returns the names.
 
-## Edge Services: microproxies
-> proxy requests from an edge-service to mid-tier services with a microproxy. For some classes of clients, a microproxy and security (HTTPS, authentication) might be enough
+> the code works, but it assumes that the `reservation-service` will always be up and responding to requests. We need to be a bit more defensive in any code that clients will connect to. We'll use a circuit-breaker to ensure that the `reservation-client` does something useful as a _fallback_ when it can't connect to the `reservation-service`.
 
-- take the code from the checkpoint #1 and run everything except the `reservation-client`
-- add `org.springframework.cloud`:`spring-cloud-starter-zuul` and   `@EnableZullProxy` to the `reservation-client`, then run it.
-- launch a browser and visit the `reservation-client` in the browser under the context path `/reservation-service/reservations`.
+- add `org.springframework.boot`:`spring-boot-starter-actuator` and `org.springframework.cloud`:`spring-cloud-starter-hystrix` to the `reservation-client`
+- add `@EnableCircuitBreaker` to our `DemoApplication` configuration class
+- add `@HystrixCommand` around any potentially shaky service-to-service calls, like `getReservationNames`, specifying a fallback method that returns an empty collection.
+- test that everything works by killing the `reservation-service` and revisiting the `/reservations/names` endpoint
+- go to the [Spring Initializr](http://start.spring.io) and stand up a new service - with an `artifactId` of `hystrix-dashboard` - that uses Eureka Discovery, Config Client, and the Hystrix Dashboard.
+- identify it is as `hystrix-dashboard` in `bootstrap.properties` and point it to config server.
+- annotate it with `@EnableHystrixDashboard` and run it. You should be able to load it at `http://localhost:8010/hystrix.html`. It will expect a heartbeat stream from any of the services with a circuit breaker in them. Give it the address from the `reservation-client`: `http://localhost:9999/hystrix.stream`
+
 
 ## Streams
 > while REST is an east, powerful approach to building services, it doesn't provide much in the way of guarantees about state. A failed write needs to be retried, requiring more work of the client. Messaging, on the other hand, guarantees that _eventually_ the intended write will be processed. Eventual consistency works most of the time; even banks don't use distributed transactions! In this lab, we'll look at Spring Cloud Stream which builds atop Spring Integration and the messaging subsystem from Spring XD. Spring Cloud Stream provides the notion of _binders_ that automatically wire up message egress and ingress given a valid connection factory and an agreed upon destination (e.g.: `reservations` or `orders`).
@@ -133,13 +140,13 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - run `./bin/zipkin.sh`
 - add `org.springframework.cloud`:`spring-cloud-starter-zipkin` to both the `reservation-service` and the `reservation-client`
 - configure a `@Bean` of type `AlwaysSampler` for both the `reservation-service` and `reservation-client`.
-- observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://$DOCKER_IP:8080` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints.
+- observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://$DOCKER_HOST:8080` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints.
 - run `./bin/elk.sh`
 - add `net.logstash.logback`:`logstash-logback-encoder`:`4.2` to the `reservation-service` and `reservation-client`
-- add `logback.xml` to each project's `resources` directory. it should be configured to point to the value of `$DOCKER_IP` or some DNS entry
+- add `logback.xml` to each project's `resources` directory. it should be configured to point to the value of `$DOCKER_HOST` or some DNS entry
 - import `org.slf4j.Logger` and `org.slf4j.LoggerFactory`
 - declare a logger: `Logger LOGGER = LoggerFactory.getLogger( DemoApplication.class);`
-- in the `reservation-service`, use `LogstashMarker`s to emit interesting semantic logs to be collected by the Kibana UI at `http://$DOCKER_IP:...`
+- in the `reservation-service`, use `LogstashMarker`s to emit interesting semantic logs to be collected by the Kibana UI at `http://$DOCKER_HOST:...`
 
 ## Security
 - add `org.springframework.cloud`:`spring-cloud-starter-oauth2` to the `reservation-client`.
