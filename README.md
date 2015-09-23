@@ -53,6 +53,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > the [12 Factor](http://12factor.net/config) manifesto speaks about externalizing that which changes from one environment to another - hosts,  locators, passwords, etc. - from the application itself. Spring Boot readily supports this pattern, but it's not enough. In this lab, we'll loko at how to centralize, externalize, and dynamically update application configuration with the Spring Cloud Config Server.
 
+- comment out the `GraphiteReporter` bean if you want to avoid running `./bin/graphite.sh`
 - go to the Spring Initializr, choose the latest milestone of Spring Boot 1.3, specify an `artifactId` of `config-server` and check the `Config Server` checkbox.
 - In `application.properties` for the Config Server, point the new module to the configuration in our custom Git repository with the property `spring.cloud.config.server.git.uri` in `application.properties`.
 - Add `server.port=8888` in `application.properties` to ensure that the Config Server is running on the right port for service to find it.
