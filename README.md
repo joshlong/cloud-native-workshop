@@ -55,8 +55,9 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 - comment out the `GraphiteReporter` bean if you want to avoid running `./bin/graphite.sh`
 - go to the Spring Initializr, choose the latest milestone of Spring Boot 1.3, specify an `artifactId` of `config-server` and check the `Config Server` checkbox.
-- In `application.properties` for the Config Server, point the new module to the configuration in our custom Git repository with the property `spring.cloud.config.server.git.uri` in `application.properties`.
-- Add `server.port=8888` in `application.properties` to ensure that the Config Server is running on the right port for service to find it.
+- you should `git clone` the [Git repository for this workshop - https://github.com/joshlong/bootiful-microservices-config](`https://github.com/joshlong/bootiful-microservices-config.git`)
+- In the Config Server's `application.properties`, specify that it should run on port 8888 (`server.port=8888`) and that it should manage the Git repository of configuration that lives in the root directory of the `git clone`'d  configuration. (`spring.cloud.config.server.git.uri=...`).
+- Add `server.port=8888` to the `application.properties` to ensure that the Config Server is running on the right port for service to find it.
 - add the Spring Cloud BOM (you can copy it from the Config Server) to the `reservation-service`.
 - add `org.springframework.cloud`:`spring-cloud-starter-config` to the `reservation-service`.
 - create a `boostrap.properties` that lives in the same place as `application.properties` and discard the `application.properties` file. Instead, we now need only tell the Spring application where to find the Config Server, with `spring.cloud.config.uri=${config.server:http://localhost:8888}`, and how to identify itself to the Config Server and other services, later, with `spring.application.name`.
@@ -135,12 +136,16 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - Observe that this is specified in the config server for us in the `reservation-client` module: `spring.cloud.stream.bindings.input=reservations`. `input` is arbitrary and refers to the (arbitrary) channel of the same name described and referenced from the `Sink.class` definition.
 
 
-## Logging & distributed tracing with ELK and Zipkin
+## Distributed Tracing with Zipkin
+
+> Distributed tracing lets us trace the path of a request from one service to another. It's very useful in understanding where a failure is occuring in a complex chain of calls.
 
 - run `./bin/zipkin.sh`
 - add `org.springframework.cloud`:`spring-cloud-starter-zipkin` to both the `reservation-service` and the `reservation-client`
 - configure a `@Bean` of type `AlwaysSampler` for both the `reservation-service` and `reservation-client`.
 - observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://$DOCKER_HOST:8080` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints.
+
+## Log Aggregation and Analysis with ELK
 - run `./bin/elk.sh`
 - add `net.logstash.logback`:`logstash-logback-encoder`:`4.2` to the `reservation-service` and `reservation-client`
 - add `logback.xml` to each project's `resources` directory. it should be configured to point to the value of `$DOCKER_HOST` or some DNS entry
