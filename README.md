@@ -53,9 +53,10 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > the [12 Factor](http://12factor.net/config) manifesto speaks about externalizing that which changes from one environment to another - hosts,  locators, passwords, etc. - from the application itself. Spring Boot readily supports this pattern, but it's not enough. In this lab, we'll loko at how to centralize, externalize, and dynamically update application configuration with the Spring Cloud Config Server.
 
-- go to the Spring Initializr, choose the latest milestone of Spring Boot 1.3, specify an `artifactId` of `config-server` and check the `Config Server` checkbox.
+- go to the Spring Initializr, choose the latest milestone of Spring Boot 1.3, specify an `artifactId` of `config-service` and check the `Config Server` checkbox.
 - you should `git clone` the [Git repository for this workshop - https://github.com/joshlong/bootiful-microservices-config](`https://github.com/joshlong/bootiful-microservices-config.git`)
 - In the Config Server's `application.properties`, specify that it should run on port 8888 (`server.port=8888`) and that it should manage the Git repository of configuration that lives in the root directory of the `git clone`'d  configuration. (`spring.cloud.config.server.git.uri=...`).
+- add `@EnabvleConfigServer` to the `config-service` `DemoApplication`
 - Add `server.port=8888` to the `application.properties` to ensure that the Config Server is running on the right port for service to find it.
 - add the Spring Cloud BOM (you can copy it from the Config Server) to the `reservation-service`.
 - add `org.springframework.cloud`:`spring-cloud-starter-config` to the `reservation-service`.
@@ -77,7 +78,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - add `org.springframework.cloud`:`spring-cloud-starter-eureka` to the `reservation-service`
 - add `@EnableDiscoveryClient` to the `reservation-service`'s `DemoApplication` and restart the process, and then confirm its appearance in the Eureka Server at `http://localhost:8761`
 - demonstrate using the `DiscoveryClient` API
-- use the Spring Initializr, setup a new module, `reservation-client`, that uses the Config Server (`org.springframework.cloud`:`spring-cloud-starter-config`), Eureka Discovery (`org.springframework.cloud`:`spring-cloud-starter-eureka`), and Web (`org.springframework.boot`:`spring-boot-starter-web`). 
+- use the Spring Initializr, setup a new module, `reservation-client`, that uses the Config Server (`org.springframework.cloud`:`spring-cloud-starter-config`), Eureka Discovery (`org.springframework.cloud`:`spring-cloud-starter-eureka`), and Web (`org.springframework.boot`:`spring-boot-starter-web`).
 - create a `bootstrap.properties`, just as with the other modules, but name this one `reservation-client`.
 - create a `CommandLineRunner` that uses the `DiscoveryClient` to look up other services programatically
 - **EXTRA CREDIT**: install [Consul](http://Consul.io) and replace Eureka with Consul. You could use `./bin/consul.sh`, but prepare yourself for some confusion around host resolution if you're running Docker inside a Vagrant VM.
