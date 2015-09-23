@@ -111,8 +111,25 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - annotate it with `@EnableHystrixDashboard` and run it. You should be able to load it at `http://localhost:8010/hystrix.html`. It will expect a heartbeat stream from any of the services with a circuit breaker in them. Give it the address from the `reservation-client`: `http://localhost:9999/hystrix.stream`
 
 
-## 6. Streams
-> while REST is an east, powerful approach to building services, it doesn't provide much in the way of guarantees about state. A failed write needs to be retried, requiring more work of the client. Messaging, on the other hand, guarantees that _eventually_ the intended write will be processed. Eventual consistency works most of the time; even banks don't use distributed transactions! In this lab, we'll look at Spring Cloud Stream which builds atop Spring Integration and the messaging subsystem from Spring XD. Spring Cloud Stream provides the notion of _binders_ that automatically wire up message egress and ingress given a valid connection factory and an agreed upon destination (e.g.: `reservations` or `orders`).
+
+## 6. to the Cloud!
+
+> Spring Cloud helps you develop services that are resilient to failure - they're _fault tolerant_. If a service goes down, they'll degrade gracefully, and correctly expand to accommodate the available capacity. But who starts and stops these services? You need a platform for that. In this lab, we'll use a free trial account at Pivotal Web Services to demonstrate how to deploy, scale and heal our services.
+
+- comment out the `GraphiteReporter` bean
+- remove the `<executable/>` attribute from your Maven build plugin
+- make sure that each Maven build defines a `<finalName>` element as: `<finalName>${project.artifactId}</finalName>` so that you can consistently refer to the built artifact from each Cloud Foundry manifest.
+- sign up for a free trial [account at Pivotal Web Services](http://run.pivotal.io/).
+- `cf login`, and then `cf target` the Pivotal Web Services endpoint, `api.run.pivotal.io`
+- enable the Spring Boot actuator `/shutdown` endpoint  in the Config Server `application.properties`
+- describe each service using a `manifest.yml`s
+- run `cf.sh` in the `labs/7` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io)
+- `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-service`
+- observe that `cf apps` records the downed, flagging service and eventually restores it
+- observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
+
+## 7. Streams
+> while REST is an easy, powerful approach to building services, it doesn't provide much in the way of guarantees about state. A failed write needs to be retried, requiring more work of the client. Messaging, on the other hand, guarantees that _eventually_ the intended write will be processed. Eventual consistency works most of the time; even banks don't use distributed transactions! In this lab, we'll look at Spring Cloud Stream which builds atop Spring Integration and the messaging subsystem from Spring XD. Spring Cloud Stream provides the notion of _binders_ that automatically wire up message egress and ingress given a valid connection factory and an agreed upon destination (e.g.: `reservations` or `orders`).
 
 - start `./bin/rabbitmq.sh`
 - add `org.springframework.cloud`:`spring-cloud-starter-stream-rabbit` to both the `reservation-client` and `reservation-service`.
@@ -135,20 +152,6 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - Observe that this is specified in the config server for us in the `reservation-client` module: `spring.cloud.stream.bindings.input=reservations`. `input` is arbitrary and refers to the (arbitrary) channel of the same name described in the `Sink.class` definition.
 
 
-## 7. to the Cloud!
-
-> Spring Cloud helps you develop services that are resilient to failure - they're _fault tolerant_. If a service goes down, they'll degrade gracefully, and correctly expand to accommodate the available capacity. But who starts and stops these services? You need a platform for that. In this lab, we'll use a free trial account at Pivotal Web Services to demonstrate how to deploy, scale and heal our services.
-
-
-- make sure that each Maven build defines a `<finalName>` element as: `<finalName>${project.artifactId}</finalName>` so that you can consistently refer to the built artifact from each Cloud Foundry manifest.
-- sign up for a free trial [account at Pivotal Web Services](http://run.pivotal.io/).
-- `cf login`, and then `cf target` the Pivotal Web Services endpoint, `api.run.pivotal.io`
-- enable the Spring Boot actuator `/shutdown` endpoint  in the Config Server `application.properties`
-- describe each service using a `manifest.yml`s
-- run `cf.sh` in the `labs/7` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io)
-- `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-service`
-- observe that `cf apps` records the downed, flagging service and eventually restores it
-- observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
 
 ## 8. Distributed Tracing with Zipkin
 

@@ -1,8 +1,5 @@
 package demo;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -13,8 +10,6 @@ import org.springframework.boot.actuate.metrics.CounterService;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
@@ -22,17 +17,13 @@ import org.springframework.data.rest.core.annotation.*;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceProcessor;
-import org.springframework.integration.annotation.MessageEndpoint;
-import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
-@EnableBinding(Sink.class)
 @EnableDiscoveryClient
 @SpringBootApplication
 public class DemoApplication {
@@ -43,6 +34,7 @@ public class DemoApplication {
         return () -> Health.status("I <3 Spring!").build();
     }
 
+/*
 
     @Bean
     GraphiteReporter graphiteReporter(MetricRegistry registry,
@@ -54,6 +46,7 @@ public class DemoApplication {
         reporter.start(2, TimeUnit.SECONDS);
         return reporter;
     }
+*/
 
     @Bean
     CommandLineRunner runner(ReservationRepository rr) {
@@ -103,19 +96,6 @@ public class DemoApplication {
     }
 }
 
-@MessageEndpoint
-class ReservationMessageEndpoint {
-
-    @Autowired
-    private ReservationRepository reservationRepository;
-
-    @ServiceActivator(inputChannel = Sink.INPUT)
-    public void acceptReservation(String rn) {
-        this.reservationRepository.save(new Reservation(rn));
-    }
-
-}
-
 @RefreshScope
 @RestController
 class MessageRestController {
@@ -148,4 +128,3 @@ interface ReservationRepository extends JpaRepository<Reservation, Long> {
     @RestResource(path = "by-name")
     Collection<Reservation> findByReservationName(@Param("rn") String rn);
 }
-
