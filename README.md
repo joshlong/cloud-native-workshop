@@ -131,28 +131,32 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - observe that the `Sink.class` describes one or more Spring `MessageChannel`s which are themselves annotated with useful qualifiers like `@Input("input")`.
 - create a new `@MessagingEndpoint` that has a `@ServiceActivator`-annotated handler method to receive messages whose payload is of type `String`, the `reservationName` from the `reservation-client`.  
 - use the `String` to save new `Reservation`s using an injected `ReservationRepository`
-- Observe that this is specified in the config server for us in the `reservation-client` module: `spring.cloud.stream.bindings.input=reservations`. `input` is arbitrary and refers to the (arbitrary) channel of the same name described and referenced from the `Sink.class` definition.
+- Observe that this is specified in the config server for us in the `reservation-client` module: `spring.cloud.stream.bindings.input=reservations`. `input` is arbitrary and refers to the (arbitrary) channel of the same name described in the `Sink.class` definition.
 
 
-## Distributed Tracing with Zipkin
+## 7. to the Cloud!
 
-> Distributed tracing lets us trace the path of a request from one service to another. It's very useful in understanding where a failure is occuring in a complex chain of calls.
+> Spring Cloud helps you develop services that are resilient to failure - they're _fault tolerant_. If a service goes down, they'll degrade gracefully, and correctly expand to accommodate the available capacity. But who starts and stops these services? You need a platform for that. In this lab, we'll use a free trial account at Pivotal Web Services to demonstrate how to deploy, scale and heal our services.
+
+
+- make sure that each Maven build defines a `<finalName>` element as: `<finalName>${project.artifactId}</finalName>` so that you can consistently refer to the built artifact from each Cloud Foundry manifest.
+- sign up for a free trial [account at Pivotal Web Services](http://run.pivotal.io/).
+- `cf login`, and then `cf target` the Pivotal Web Services endpoint, `api.run.pivotal.io`
+- enable the Spring Boot actuator `/shutdown` endpoint  in the Config Server `application.properties`
+- describe each service using a `manifest.yml`s
+- run `cf.sh` in the `labs/7` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io)
+- `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-service`
+- observe that `cf apps` records the downed, flagging service and eventually restores it
+- observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
+
+## 8. Distributed Tracing with Zipkin
+
+> Distributed tracing lets us trace the path of a request from one service to another. It's very useful in understanding where a failure is occurring in a complex chain of calls.
 
 - run `./bin/zipkin.sh`
 - add `org.springframework.cloud`:`spring-cloud-starter-zipkin` to both the `reservation-service` and the `reservation-client`
 - configure a `@Bean` of type `AlwaysSampler` for both the `reservation-service` and `reservation-client`.
 - observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://$DOCKER_HOST:8080` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints.
-
-## To The Cloud!
-- remove Logstash (you could keep it, but setting up Logstash on AWS is an **EXTRA CREDIT** exercise; besides, Cloud Foundry provides the _loggregator_ which works just fine with tools like Splunk and negates the need for the ELK stack)
-- remove Zipkin (you could keep it, but setting up Zipkin on AWS is an **EXTRA CREDIT** exercise)
-- `cf login`, and then `cf target` the Pivotal Web Services endpoints
-- enable the Spring Boot actuator `/shutdown` endpoint  in the Config Server `application.properties`
-- describe each service using `manifest.yml`s
-- run `./bin/cf.sh` to deploy the whole suite of services to Pivotal Web Services
-- `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-service`
-- observe that `cf apps` records the downed, flagging service and eventually restores it
-- observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
 
 ## Security
 - add `org.springframework.cloud`:`spring-cloud-starter-oauth2` to the `reservation-client`.
