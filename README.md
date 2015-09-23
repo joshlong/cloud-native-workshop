@@ -53,7 +53,6 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > the [12 Factor](http://12factor.net/config) manifesto speaks about externalizing that which changes from one environment to another - hosts,  locators, passwords, etc. - from the application itself. Spring Boot readily supports this pattern, but it's not enough. In this lab, we'll loko at how to centralize, externalize, and dynamically update application configuration with the Spring Cloud Config Server.
 
-- comment out the `GraphiteReporter` bean if you want to avoid running `./bin/graphite.sh`
 - go to the Spring Initializr, choose the latest milestone of Spring Boot 1.3, specify an `artifactId` of `config-server` and check the `Config Server` checkbox.
 - you should `git clone` the [Git repository for this workshop - https://github.com/joshlong/bootiful-microservices-config](`https://github.com/joshlong/bootiful-microservices-config.git`)
 - In the Config Server's `application.properties`, specify that it should run on port 8888 (`server.port=8888`) and that it should manage the Git repository of configuration that lives in the root directory of the `git clone`'d  configuration. (`spring.cloud.config.server.git.uri=...`).
@@ -75,7 +74,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 - go to the Spring Initializr and stand up a Eureka server by creating a new module called `Eureka Server` and adding `@EnableEurekaServer`.
 - Make sure this module _also_ talks to the Config Server as described in the last lab.
-- identify the service as `eureka-server`.
+- identify the service as `eureka-service`.
 - add `@EnableDiscoveryClient` to the `reservation-service`'s `DemoApplication` and restart the process, and then confirm its appearance in the Eureka Server at `http://localhost:8761`
 - demonstrate using the `DiscoveryClient` API
 - use the Spring Initializr, setup a new module, `reservation-client`, that uses the Config Server, Eureka Discovery, and Web.
@@ -88,7 +87,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > Proxy requests from an edge-service to mid-tier services with a _microproxy_. For some classes of clients, a microproxy and security (HTTPS, authentication) might be enough.
 
-- add `org.springframework.cloud`:`spring-cloud-starter-zuul` and `@EnableZullProxy` to the `reservation-client`, then run it.
+- add `org.springframework.cloud`:`spring-cloud-starter-zuul` and `@EnableZuulProxy` to the `reservation-client`, then run it.
 - launch a browser and visit the `reservation-client` at `http://localhost:9999/reservation-service/reservations`. This is proxying your request to `http://localhost:8000/reservations`.
 
 > API gateways are used whenever a client - like a mobile phone or HTML5 client - requires API translation. Perhaps the client requires coarser grained payloads, or transformed views on the data
@@ -111,16 +110,16 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - annotate it with `@EnableHystrixDashboard` and run it. You should be able to load it at `http://localhost:8010/hystrix.html`. It will expect a heartbeat stream from any of the services with a circuit breaker in them. Give it the address from the `reservation-client`: `http://localhost:9999/hystrix.stream`
 
 
-## Streams
+## 6. Streams
 > while REST is an east, powerful approach to building services, it doesn't provide much in the way of guarantees about state. A failed write needs to be retried, requiring more work of the client. Messaging, on the other hand, guarantees that _eventually_ the intended write will be processed. Eventual consistency works most of the time; even banks don't use distributed transactions! In this lab, we'll look at Spring Cloud Stream which builds atop Spring Integration and the messaging subsystem from Spring XD. Spring Cloud Stream provides the notion of _binders_ that automatically wire up message egress and ingress given a valid connection factory and an agreed upon destination (e.g.: `reservations` or `orders`).
 
 - start `./bin/rabbitmq.sh`
+- add `org.springframework.cloud`:`spring-cloud-starter-stream-rabbit` to both the `reservation-client` and `reservation-service`.
 
 > Sources - like water from a faucet - describe where messages may come from. In our example, messages come from the `reservation-client` that wishes to write messages to the `reservation-service` from the API gateway.
 
-- add `org.springframework.cloud`:`spring-cloud-starter-stream-binder-rabbit`
 - add `@EnableBinding(Source.class)` to the `reservation-client` `DemoApplication`
-- create a new REST endpoint in the `ReservationNamesRestController` to accept new reservations by reservation-name
+- create a new REST endpoint - a `POST` endpoint that accepts a `@RequestBody Reservation reservation` - in the `ReservationApiGatewayRestController` to accept new reservations  
 - observe that the `Source.class` describes one or more Spring `MessageChannel`s which are themselves annotated with useful qualifiers like `@Output("output")`.
 - in the new endpoint, inject the Spring `MessageChannel` and qualify it with `@Output("output")` - the same one as in the `Source.class` definition.
 - use the `MessageChannel` to send a message to the `reservation-service`. Connect the two modules through a agreed upon name, which we'll call `reservations`.
@@ -128,7 +127,6 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > Sinks receive messages that flow _to_ this service (like the kitchen sink into which water from the faucet flows).
 
-- add `org.springframework.cloud`:`spring-cloud-starter-stream-binder-rabbit` to the `reservation-service` `DemoApplication`
 - add `@EnableBinding(Sink.class)` to the `reservation-service`  `DemoApplication`
 - observe that the `Sink.class` describes one or more Spring `MessageChannel`s which are themselves annotated with useful qualifiers like `@Input("input")`.
 - create a new `@MessagingEndpoint` that has a `@ServiceActivator`-annotated handler method to receive messages whose payload is of type `String`, the `reservationName` from the `reservation-client`.  
@@ -145,13 +143,16 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - configure a `@Bean` of type `AlwaysSampler` for both the `reservation-service` and `reservation-client`.
 - observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://$DOCKER_HOST:8080` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints.
 
-## Log Aggregation and Analysis with ELK
-- run `./bin/elk.sh`
-- add `net.logstash.logback`:`logstash-logback-encoder`:`4.2` to the `reservation-service` and `reservation-client`
-- add `logback.xml` to each project's `resources` directory. it should be configured to point to the value of `$DOCKER_HOST` or some DNS entry
-- import `org.slf4j.Logger` and `org.slf4j.LoggerFactory`
-- declare a logger: `Logger LOGGER = LoggerFactory.getLogger( DemoApplication.class);`
-- in the `reservation-service`, use `LogstashMarker`s to emit interesting semantic logs to be collected by the Kibana UI at `http://$DOCKER_HOST:...`
+## To The Cloud!
+- remove Logstash (you could keep it, but setting up Logstash on AWS is an **EXTRA CREDIT** exercise; besides, Cloud Foundry provides the _loggregator_ which works just fine with tools like Splunk and negates the need for the ELK stack)
+- remove Zipkin (you could keep it, but setting up Zipkin on AWS is an **EXTRA CREDIT** exercise)
+- `cf login`, and then `cf target` the Pivotal Web Services endpoints
+- enable the Spring Boot actuator `/shutdown` endpoint  in the Config Server `application.properties`
+- describe each service using `manifest.yml`s
+- run `./bin/cf.sh` to deploy the whole suite of services to Pivotal Web Services
+- `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-service`
+- observe that `cf apps` records the downed, flagging service and eventually restores it
+- observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
 
 ## Security
 - add `org.springframework.cloud`:`spring-cloud-starter-oauth2` to the `reservation-client`.
@@ -170,14 +171,10 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - extract all the repeated code into auto-configuration: the `AlwaysSampler` bean, `@EnableDiscoveryClient`, the custom `HealthIndicator`s.
 - **EXTRA CREDIT**: define a Logger that is in turn a proxy that can only be injected using a custom qualfier (`@Logstash`)
 
-
-## To The Cloud!
-- remove Logstash (you could keep it, but setting up Logstash on AWS is an **EXTRA CREDIT** exercise; besides, Cloud Foundry provides the _loggregator_ which works just fine with tools like Splunk and negates the need for the ELK stack)
-- remove Zipkin (you could keep it, but setting up Zipkin on AWS is an **EXTRA CREDIT** exercise)
-- `cf login`, and then `cf target` the Pivotal Web Services endpoints
-- enable the Spring Boot actuator `/shutdown` endpoint  in the Config Server `application.properties`
-- describe each service using `manifest.yml`s
-- run `./bin/cf.sh` to deploy the whole suite of services to Pivotal Web Services
-- `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-service`
-- observe that `cf apps` records the downed, flagging service and eventually restores it
-- observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
+## Log Aggregation and Analysis with ELK
+- run `./bin/elk.sh`
+- add `net.logstash.logback`:`logstash-logback-encoder`:`4.2` to the `reservation-service` and `reservation-client`
+- add `logback.xml` to each project's `resources` directory. it should be configured to point to the value of `$DOCKER_HOST` or some DNS entry
+- import `org.slf4j.Logger` and `org.slf4j.LoggerFactory`
+- declare a logger: `Logger LOGGER = LoggerFactory.getLogger( DemoApplication.class);`
+- in the `reservation-service`, use `LogstashMarker`s to emit interesting semantic logs to be collected by the Kibana UI at `http://$DOCKER_HOST:...`
