@@ -1,0 +1,11 @@
+---
+applications:
+- name: reservation-service
+  path: target/reservation-service.jar
+  host: reservation-service-${random-word}
+  services:
+    - config-service
+    - eureka-service
+  env:
+    DEBUG: "true"
+    debug: "true"
