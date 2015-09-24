@@ -116,18 +116,22 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > Spring Cloud helps you develop services that are resilient to failure - they're _fault tolerant_. If a service goes down, they'll degrade gracefully, and correctly expand to accommodate the available capacity. But who starts and stops these services? You need a platform for that. In this lab, we'll use a free trial account at Pivotal Web Services to demonstrate how to deploy, scale and heal our services.
 
+- do a `mvn clean install` to get binaries for each of the modules
 - comment out the `GraphiteReporter` bean in `reservation-service`
 - remove the `<executable/>` attribute from your Maven build plugin
 - make sure that each Maven build defines a `<finalName>` element as: `<finalName>${project.artifactId}</finalName>` so that you can consistently refer to the built artifact from each Cloud Foundry manifest.
 - sign up for a free trial [account at Pivotal Web Services](http://run.pivotal.io/).
 - change the various `bootstrap.properties` files to load configuration from an environment property, `vcap.services.config-service.credentials.uri`, _or_, if that's not available, `http://localhost:8888`: `spring.cloud.config.uri=${vcap.services.config-service.credentials.uri:http://localhost:8888}`
 - `cf login` the Pivotal Web Services endpoint, `api.run.pivotal.io` and then enter your credentials for the free trial account you've signed up for.
-- enable the Spring Boot actuator `/shutdown` endpoint  in the Config Server `application.properties`
+- enable the Spring Boot actuator `/shutdown` endpoint  in the Config Server `application.properties`: `endpoints.shutdown.enabled=true`
 - describe each service - its RAM, DNS `route`, and required services - using a `manifest.yml` file collocated with each binary
-- run `cf.sh` in the `labs/6` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io), OR:
+
+> you may generate the `manifest.yml` manually or you may use a tool like Spring Tool Suite's Spring Boot Dashboard which will, on deploy, prompt you to save the deployment configuration as a `manifest.yml`.
+
+- run `cf.sh` in the `labs/6` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io), **OR**:
 - follow the steps in `cf-simple.sh`. This will `cf push` the `eureka-service` and `config-service`. It will use `cf cups` to create services that are available to `reservation-service` and `reservation-client` as environment variables, just like any other standard service. Then, it will `cf push` `reservation-client` and `reservation-service`, binding to those services. See `cf-simple.sh` for details and comments - you should be able to follow along on Windows as well.
-- `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-service`
-- observe that `cf apps` records the downed, flagging service and eventually restores it
+- `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-client`: `curl -d{} http://_RESERVATION_CLIENT_ROUTE_/shutdown`, replacing `_RESERVATION_CLIENT_ROUTE_`.
+- observe that `cf apps` records the downed, _flapping_ service and eventually restores it.
 - observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
 
 ## 7. Streams
