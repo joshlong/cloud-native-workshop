@@ -1,7 +1,8 @@
 ---
 applications:
-- name: config-service  
+- name: config-service
   host: config-service-${random-word}
+  memory: 512M
   path: target/config-service.jar
   env:
     SPRING_PROFILES_ACTIVE: cloud
