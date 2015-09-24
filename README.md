@@ -142,7 +142,9 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 ## 7. Streams
 > while REST is an easy, powerful approach to building services, it doesn't provide much in the way of guarantees about state. A failed write needs to be retried, requiring more work of the client. Messaging, on the other hand, guarantees that _eventually_ the intended write will be processed. Eventual consistency works most of the time; even banks don't use distributed transactions! In this lab, we'll look at Spring Cloud Stream which builds atop Spring Integration and the messaging subsystem from Spring XD. Spring Cloud Stream provides the notion of _binders_ that automatically wire up message egress and ingress given a valid connection factory and an agreed upon destination (e.g.: `reservations` or `orders`).
 
-- start `./bin/rabbitmq.sh`
+- start `./bin/rabbitmq.sh`.
+> This will install a RabbitMQ instance that is available at `$DOCKER_IP`. You'll also be able to access the console, which is available `http://$DOCKER_IP:15672`. The username and password to access the console are `guest`/`guest`.
+
 - add `org.springframework.cloud`:`spring-cloud-starter-stream-rabbit` to both the `reservation-client` and `reservation-service`.
 
 > Sources - like water from a faucet - describe where messages may come from. In our example, messages come from the `reservation-client` that wishes to write messages to the `reservation-service` from the API gateway.
