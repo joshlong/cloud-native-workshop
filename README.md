@@ -116,14 +116,16 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > Spring Cloud helps you develop services that are resilient to failure - they're _fault tolerant_. If a service goes down, they'll degrade gracefully, and correctly expand to accommodate the available capacity. But who starts and stops these services? You need a platform for that. In this lab, we'll use a free trial account at Pivotal Web Services to demonstrate how to deploy, scale and heal our services.
 
-- comment out the `GraphiteReporter` bean
+- comment out the `GraphiteReporter` bean in `reservation-service`
 - remove the `<executable/>` attribute from your Maven build plugin
 - make sure that each Maven build defines a `<finalName>` element as: `<finalName>${project.artifactId}</finalName>` so that you can consistently refer to the built artifact from each Cloud Foundry manifest.
 - sign up for a free trial [account at Pivotal Web Services](http://run.pivotal.io/).
-- `cf login`, and then `cf target` the Pivotal Web Services endpoint, `api.run.pivotal.io`
+- change the various `bootstrap.properties` files to load configuration from an environment property, `vcap.services.config-service.credentials.uri`, _or_, if that's not available, `http://localhost:8888`: `spring.cloud.config.uri=${vcap.services.config-service.credentials.uri:http://localhost:8888}`
+- `cf login` the Pivotal Web Services endpoint, `api.run.pivotal.io` and then enter your credentials for the free trial account you've signed up for.
 - enable the Spring Boot actuator `/shutdown` endpoint  in the Config Server `application.properties`
-- describe each service using a `manifest.yml`s
-- run `cf.sh` in the `labs/7` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io)
+- describe each service - its RAM, DNS `route`, and required services - using a `manifest.yml` file collocated with each binary
+- run `cf.sh` in the `labs/6` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io), OR:
+- `cf push` the `eureka-service` and `config-service`. Use `cf cups` to create services that are available to `reservation-service` and `reservation-client` as environment variables, just like any other standard service. Then, `cf push` `reservation-client` and `reservation-service`. See `cf.sh` for examples.
 - `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-service`
 - observe that `cf apps` records the downed, flagging service and eventually restores it
 - observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
