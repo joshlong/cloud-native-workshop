@@ -18,6 +18,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,16 +60,20 @@ class ReservationApiGatewayRestController {
     private RestTemplate rt;
 
     @Autowired
-    @Output("output")
-    private MessageChannel messageChannel;
+    @Output(Source.OUTPUT)
+    private MessageChannel out;
+
 
     public Collection<String> getReservationNamesFallback() {
         return Collections.emptyList();
     }
 
+
     @RequestMapping(method = RequestMethod.POST)
-    public void accept(@RequestBody Reservation r) {
-        this.messageChannel.send(MessageBuilder.withPayload(r.getReservationName()).build());
+    public void accept(@RequestBody Reservation reservation) {
+        Message<String> build =
+            MessageBuilder.withPayload(reservation.getReservationName()) .build();
+        this.out.send( build );
     }
 
     @RequestMapping("/names")

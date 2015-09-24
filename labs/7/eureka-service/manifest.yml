@@ -1,0 +1,11 @@
+---
+applications:
+- name: eureka-service
+  host: eureka-service-${random-word}
+  memory: 512M
+  path: target/eureka-service.jar
+  services:
+      - config-service
+  env:
+    SPRING_PROFILES_ACTIVE: cloud
+    DEBUG: "true"

@@ -1,8 +1,5 @@
 package demo;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -30,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 @EnableBinding(Sink.class)
 @EnableDiscoveryClient
@@ -43,6 +39,7 @@ public class DemoApplication {
         return () -> Health.status("I <3 Spring!").build();
     }
 
+/*
 
     @Bean
     GraphiteReporter graphiteReporter(MetricRegistry registry,
@@ -54,6 +51,8 @@ public class DemoApplication {
         reporter.start(2, TimeUnit.SECONDS);
         return reporter;
     }
+*/
+
 
     @Bean
     CommandLineRunner runner(ReservationRepository rr) {
@@ -103,18 +102,19 @@ public class DemoApplication {
     }
 }
 
+
 @MessageEndpoint
-class ReservationMessageEndpoint {
+class ReservationServiceActivator {
 
     @Autowired
     private ReservationRepository reservationRepository;
 
     @ServiceActivator(inputChannel = Sink.INPUT)
-    public void acceptReservation(String rn) {
-        this.reservationRepository.save(new Reservation(rn));
+    public void accept(String reservationName) {
+        this.reservationRepository.save(new Reservation(reservationName));
     }
-
 }
+
 
 @RefreshScope
 @RestController
@@ -148,4 +148,3 @@ interface ReservationRepository extends JpaRepository<Reservation, Long> {
     @RestResource(path = "by-name")
     Collection<Reservation> findByReservationName(@Param("rn") String rn);
 }
-

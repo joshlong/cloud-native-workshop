@@ -1,12 +1,10 @@
 ---
 applications:
 - name: reservation-client
-  memory: 512M
-  instances: 1
   host: reservation-client-${random-word}
-  domain: cfapps.io
   path: target/reservation-client.jar
-  services:    
+  memory: 512M
+  services:
     - config-service
     - eureka-service
   env:
