@@ -25,10 +25,6 @@ function deploy_app(){
     echo "APP_NAME=$APP_NAME"
     cd $APP_NAME
     cf push $APP_NAME
-    #APPLICATION_DOMAIN="`app_domain $APP_NAME`"
-    #echo "APPLICATION_DOMAIN=$APPLICATION_DOMAIN"
-    #cf env $APP_NAME | grep APPLICATION_DOMAIN || cf set-env $APP_NAME APPLICATION_DOMAIN $APPLICATION_DOMAIN
-    #cf restart $APP_NAME
     cd ..
 }
 
@@ -110,6 +106,6 @@ reset
 install
 deploy_config_service
 deploy_eureka_service
-deploy_hystrix_dashboard
+#deploy_hystrix_dashboard
 deploy_reservation_service
 deploy_reservation_client

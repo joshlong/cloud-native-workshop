@@ -125,7 +125,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - enable the Spring Boot actuator `/shutdown` endpoint  in the Config Server `application.properties`
 - describe each service - its RAM, DNS `route`, and required services - using a `manifest.yml` file collocated with each binary
 - run `cf.sh` in the `labs/6` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io), OR:
-- `cf push` the `eureka-service` and `config-service`. Use `cf cups` to create services that are available to `reservation-service` and `reservation-client` as environment variables, just like any other standard service. Then, `cf push` `reservation-client` and `reservation-service`. See `cf.sh` for examples.
+- follow the steps in `cf-simple.sh`. This will `cf push` the `eureka-service` and `config-service`. It will use `cf cups` to create services that are available to `reservation-service` and `reservation-client` as environment variables, just like any other standard service. Then, it will `cf push` `reservation-client` and `reservation-service`, binding to those services. See `cf-simple.sh` for details and comments - you should be able to follow along on Windows as well.
 - `cf scale -i 4 reservation-service` to scale that single service to 4 instances. Call the `/shutdown` actuator endpoint for `reservation-service`
 - observe that `cf apps` records the downed, flagging service and eventually restores it
 - observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
