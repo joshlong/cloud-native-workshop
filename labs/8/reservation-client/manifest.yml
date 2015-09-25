@@ -1,0 +1,13 @@
+---
+applications:
+- name: reservation-client
+  host: reservation-client-${random-word}
+  path: target/reservation-client.jar
+  memory: 512M
+  services:
+    - config-service
+    - eureka-service
+  env:
+    SPRING_PROFILES_ACTIVE: cloud
+    DEBUG: "true"
+    debug: "true"

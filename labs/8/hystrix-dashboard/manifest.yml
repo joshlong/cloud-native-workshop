@@ -1,0 +1,11 @@
+---
+applications:
+- name: hystrix-dashboard
+  host: hystrix-dashboard-${random-word}
+  path: target/hystrix-dashboard.jar
+  services:
+      - config-service
+      - eureka-service
+  env:
+    SPRING_PROFILES_ACTIVE: cloud
+    DEBUG: "true"
