@@ -92,7 +92,7 @@ function reset(){
 #mvn -DskipTests=true clean install
 
 function install(){
-  apps="hystrix-dashboard reservation-client reservation-service eureka-service config-service"
+  apps="reservation-client reservation-service eureka-service config-service"
   apps_arr=( $apps )
   for a in "${apps_arr[@]}";
   do
@@ -106,6 +106,5 @@ reset
 install
 deploy_config_service
 deploy_eureka_service
-#deploy_hystrix_dashboard
 deploy_reservation_service
 deploy_reservation_client

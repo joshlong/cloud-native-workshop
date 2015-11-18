@@ -154,8 +154,9 @@ Add this to your `pom.xml` of the `reservation-service` from step #1.
 
 > you may generate the `manifest.yml` manually or you may use a tool like Spring Tool Suite's Spring Boot Dashboard which will, on deploy, prompt you to save the deployment configuration as a `manifest.yml`.
 
-- run `cf.sh` in the `labs/6` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io), **OR**:
-- follow the steps in `cf-simple.sh`. This will `cf push` the `eureka-service` and `config-service`. It will use `cf cups` to create services that are available to `reservation-service` and `reservation-client` as environment variables, just like any other standard service. Then, it will `cf push` `reservation-client` and `reservation-service`, binding to those services. See `cf-simple.sh` for details and comments - you should be able to follow along on Windows as well.
+- run `cf.sh` in the `labs/6` folder to deploy the whole suite of services to [Pivotal Web Services](http://run.pivotal.io). This will work fine on a *nix OS that supports BASH scripting.
+- If you're running on Windows, follow the steps in `cf-simple.sh`, interactively.
+- This will `cf push` the `eureka-service` and `config-service`. It will use `cf cups` to create services that are available to `reservation-service` and `reservation-client` as environment variables, just like any other standard service. Then, it will `cf push` `reservation-client` and `reservation-service`, binding to those services. See `cf-simple.sh` for details and comments - you should be able to follow along on Windows as well.
 
 > As you push new instances, you'll get new routes because of the configuration in the `manifest.yml` which specifies host is "...-${random-word}". When creating the user-provided-services (`cf cups ..`) be sure to choose only the first route. To delete orphaned routes, use `cf delete-orphaned-routes`
 
