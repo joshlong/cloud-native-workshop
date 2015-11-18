@@ -20,6 +20,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - go to the [Spring Initializr](http://start.spring.io) and specify the latest stable (non-`SNAPSHOT`) version of Spring Boot, click the link _Switch to the full version_, and then choose EVERY checkbox, then click _Generate Project_.
 - In the shell, run `mvn -DskipTests=true clean install` to force the resolution of all those dependencies so you're not stalled later. Then, run `mvn clean install` to force the resolution of the test scoped dependencies. You may discard this project after you've `install`ed everything.
 - run each of the `.sh` scripts in the `./bin` directory of the cloned Git repository for this workshop. Run `bin/psql.sh` after you've run `bin/postgresh.sh` and confirm that they all complete and emit no obvious errors
+- **VERY IMPORTANT** - go to [Pivotal Web Services](http://run.pivotal.io) and sign up for a Free Trial! You'll need an account to see this through to the end! No credit card is required, though you'll need a valid phone number!
 
 <!-- TODO which things should they run!  -->
 
@@ -165,64 +166,3 @@ Add this to your `pom.xml` of the `reservation-service` from step #1.
 - observe that the configuration for the various cloud-specific backing services is handled in terms of various configuration files in the Config Server suffixed with `-cloud.properties`.
 
 > if you need to delete an application, you can use `cf d _APP_NAME_`, where `_APP_NAME_` is your application's logical name. If you want to delete a service, use `cf ds _SERVICE_NAME_` where `_SERVICE_NAME_` is a logical name for the service. Use `-f` to force the deletion without confirmation.
-
-## 7. Streams
-> while REST is an easy, powerful approach to building services, it doesn't provide much in the way of guarantees about state. A failed write needs to be retried, requiring more work of the client. Messaging, on the other hand, guarantees that _eventually_ the intended write will be processed. Eventual consistency works most of the time; even banks don't use distributed transactions! In this lab, we'll look at Spring Cloud Stream which builds atop Spring Integration and the messaging subsystem from Spring XD. Spring Cloud Stream provides the notion of _binders_ that automatically wire up message egress and ingress given a valid connection factory and an agreed upon destination (e.g.: `reservations` or `orders`).
-
-- start `./bin/rabbitmq.sh`.
-> This will install a RabbitMQ instance that is available at `$DOCKER_IP`. You'll also be able to access the console, which is available `http://$DOCKER_IP:15672`. The username and password to access the console are `guest`/`guest`.
-
-- add `org.springframework.cloud`:`spring-cloud-starter-stream-rabbit` to both the `reservation-client` and `reservation-service`.
-
-> Sources - like water from a faucet - describe where messages may come from. In our example, messages come from the `reservation-client` that wishes to write messages to the `reservation-service` from the API gateway.
-
-- add `@EnableBinding(Source.class)` to the `reservation-client` `DemoApplication`
-- create a new REST endpoint - a `POST` endpoint that accepts a `@RequestBody Reservation reservation` - in the `ReservationApiGatewayRestController` to accept new reservations  
-- observe that the `Source.class` describes one or more Spring `MessageChannel`s which are themselves annotated with useful qualifiers like `@Output("output")`.
-- in the new endpoint, inject the Spring `MessageChannel` and qualify it with `@Output("output")` - the same one as in the `Source.class` definition.
-- use the `MessageChannel` to send a message to the `reservation-service`. Connect the two modules through a agreed upon name, which we'll call `reservations`.
-- Observe that this is specified in the config server for us in the `reservation-service` module: `spring.cloud.stream.bindings.output=reservations`. `output` is arbitrary and refers to the (arbitrary) channel of the same name described and referenced from the `Source.class` definition.
-
-> Sinks receive messages that flow _to_ this service (like the kitchen sink into which water from the faucet flows).
-
-- add `@EnableBinding(Sink.class)` to the `reservation-service`  `DemoApplication`
-- observe that the `Sink.class` describes one or more Spring `MessageChannel`s which are themselves annotated with useful qualifiers like `@Input("input")`.
-- create a new `@MessagingEndpoint` that has a `@ServiceActivator`-annotated handler method to receive messages whose payload is of type `String`, the `reservationName` from the `reservation-client`.  
-- use the `String` to save new `Reservation`s using an injected `ReservationRepository`
-- Observe that this is specified in the config server for us in the `reservation-client` module: `spring.cloud.stream.bindings.input=reservations`. `input` is arbitrary and refers to the (arbitrary) channel of the same name described in the `Sink.class` definition.
-
-
-
-## 8. Distributed Tracing with Zipkin
-
-> Distributed tracing lets us trace the path of a request from one service to another. It's very useful in understanding where a failure is occurring in a complex chain of calls.
-
-- run `./bin/zipkin.sh`
-- add `org.springframework.cloud`:`spring-cloud-starter-zipkin` to both the `reservation-service` and the `reservation-client`
-- configure a `@Bean` of type `AlwaysSampler` for both the `reservation-service` and `reservation-client`.
-- observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://$DOCKER_HOST:8080` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints.
-
-## Security
-- add `org.springframework.cloud`:`spring-cloud-starter-oauth2` to the `reservation-client`.
-- add `@EnableOAuthSso`
-- observe that we've already pointed it to use GitHub for authentication in the config server's `application.properties`
-- in the `reservation-client`, create a new REST endpoint called `/user/info` and use it to expose the authenticated principal to the authenticated client.
-- confirm this works by launching a new browser in incognito mode and then hitting the protected resource
-- switch to a qualified `loadBalancedOauth2RestTemplate` instead of any old `@RestTemplate`.
-- **EXTRA CREDIT**: use Spring Security OAuth's Authroization Server instead of GitHub
-
-## Optimize for Velocity and Consistency
-- create a parent dependency that in turn defines all the Git Commit ID plugins, the executable jars, etc.
-- package up common resources like `logstash.xml`
-- create a new stereotypical and task-centric Maven `starter` dependency that in turn brings in commonly used dependencies like `org.springframework.cloud`:`spring-cloud-starter-zipkin`, `org.springframework.cloud`:`spring-cloud-starter-eureka`,
-`org.springframework.cloud`:`spring-cloud-starter-config`, `org.springframework.cloud`:`spring-cloud-starter-stream-binder-rabbit`, `org.springframework.boot`:`spring-boot-starter-actuator`, `net.logstash.logback`:`logstash-logback-encoder`:`4.2`,
-- extract all the repeated code into auto-configuration: the `AlwaysSampler` bean, `@EnableDiscoveryClient`, the custom `HealthIndicator`s.
-- **EXTRA CREDIT**: define a Logger that is in turn a proxy that can only be injected using a custom qualfier (`@Logstash`)
-
-## Log Aggregation and Analysis with ELK
-- run `./bin/elk.sh`
-- add `net.logstash.logback`:`logstash-logback-encoder`:`4.2` to the `reservation-service` and `reservation-client`
-- add `logback.xml` to each project's `resources` directory. it should be configured to point to the value of `$DOCKER_HOST` or some DNS entry
-- import `org.slf4j.Logger` and `org.slf4j.LoggerFactory`
-- declare a logger: `Logger LOGGER = LoggerFactory.getLogger( DemoApplication.class);`
-- in the `reservation-service`, use `LogstashMarker`s to emit interesting semantic logs to be collected by the Kibana UI at `http://$DOCKER_HOST:...`
