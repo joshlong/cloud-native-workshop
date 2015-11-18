@@ -1,4 +1,4 @@
-# Cloud Native Java Workshop
+# Cloud Native Java Workshop - 1 Day
 
 The accompanying code for this workshop is [on Github](http://github.com/joshlong/cloud-native-workshop)
 
@@ -6,19 +6,30 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > microservices, for better or for worse, involve a lot of moving parts. Let's make sure we can run all those things in this lab.
 
-- you will need JDK 8, Maven, an IDE and Docker in order to follow along. Specify important environment variables before opening any IDEs: `JAVA_HOME`, `DOCKER_HOST`.
-- Install [the Spring Boot CLI](http://docs.spring.io/autorepo/docs/spring-boot/current/reference/html/getting-started-installing-spring-boot.html#getting-started-installing-the-cli) and [the Spring Cloud CLI](https://github.com/spring-cloud/spring-cloud-cli).
+- you will need JDK 8, Git, Maven, an IDE and [Docker Toolbox](https://www.docker.com/docker-toolbox) in order to follow along.
+- Specify important environment variables before opening any IDEs. Set `JAVA_HOME` to where the JDK is. If you're on OSX you can have it set with:
+  ```
+  export JAVA_HOME=`/usr/libexec/java_home`
+  ```
+- create an environment variable called `DOCKER_HOST` that points to your Docker Toolbox machine. On OSX and Windows this will resolve to a virtual machine running in VirtualBox. If you're on OSX you can have it set with:
+  ```
+  export DOCKER_HOME=`docker-machine ip default`
+  ```
+
 - [Install the Cloud Foundry CLI](https://docs.cloudfoundry.org/devguide/installcf/install-go-cli.html)
-- go to the [Spring Initializr](http://start.spring.io) and specify the latest milestone of Spring Boot 1.3 and then choose EVERY checkbox except those related to AWS, then click generate. In the shell, run `mvn -DskipTests=true clean install` to force the resolution of all those dependencies so you're not stalled later. Then, run `mvn clean install` to force the resolution of the test scoped dependencies. You may discard this project after you've `install`ed everything.
-- run each of the `.sh` scripts in the `./bin` directory; run `psql.sh` after you've run `postgresh.sh` and confirm that they all complete and emit no obvious errors
+- go to the [Spring Initializr](http://start.spring.io) and specify the latest stable (non-`SNAPSHOT`) version of Spring Boot, click the link _Switch to the full version_, and then choose EVERY checkbox, then click _Generate Project_.
+- In the shell, run `mvn -DskipTests=true clean install` to force the resolution of all those dependencies so you're not stalled later. Then, run `mvn clean install` to force the resolution of the test scoped dependencies. You may discard this project after you've `install`ed everything.
+- run each of the `.sh` scripts in the `./bin` directory of the cloned Git repository for this workshop. Run `bin/psql.sh` after you've run `bin/postgresh.sh` and confirm that they all complete and emit no obvious errors
+
+<!-- TODO which things should they run!  -->
 
 ## 1. "Bootcamp"
 
 > in this lab we'll take a look at building a basic Spring Boot application that uses JPA and Spring Data REST. We'll look at how to start a new project, how Spring Boot exposes functionality, and how testing works.
 
-- go to the [Spring Initializr](http://start.spring.io) and select H2, REST Repositories, JPA, Vaadin, Web. Select the latest Spring Boot 1.3 RC1 version. give it an `artifactId` of `reservation-service`.
+- go to the [Spring Initializr](http://start.spring.io) and select the H2, Actuator, REST Repositories, JPA, and Web checkboxes. Select the latest Spring Boot 1.3 version. give it an `artifactId` of `reservation-service`.
 - Run `mvn clean install` and import it into your favorite IDE using Maven import.
-- add a simple entity (`Reservation`) and a repository (`ReservationRepository`)
+- add a simple JPA entity (`Reservation`) and a Spring Data repository (`ReservationRepository`)
 - map the repository to the web by adding  `org.springframework.boot`:`spring-boot-starter-data-rest` and then annotating the repository with `@RepositoryRestResource`
 - add custom Hypermedia links
 - write a simple unit test
@@ -42,7 +53,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - add `io.dropwizard.metrics`:`metrics-graphite`
 - build an executable `.jar` (UNIX-specific) using the `<executable/>` configuration flag
 - add the HAL browser - `org.springframework.data`:`spring-data-rest-hal-browser` and view the Actuator endpoints using that
-- configure Maven resource filtering and the Git commit ID plugin in the `pom.xml` in all existing and subsequent `pom.xml`s, or extract out a common parent `pom.xml` that all modules may extend.
+- configure Maven resource filtering and the Git commit ID plugin in the `pom.xml` in all existing and subsequent `pom.xml`s, or extract out a common parent `pom.xml` that all modules may extend. Make sure to `git init`, `git add . `, and `git commit -a -m yolo` the directory in which the module lives
 - add `info.build.artifact=${project.artifactId}` and `info.build.version=${project.version}`  to `application.properties`.
 - introduce a new `@RepositoryEventHandler` and `@Component`. Provide handlers for `@HandleAfterCreate`, `@HandleAfterSave`, and `@HandleAfterDelete`. Extract common counters to a shared method
 - add a semantic metric using `CounterService` and observe the histogram in Graphite
@@ -67,7 +78,7 @@ Add this to your `pom.xml` of the `reservation-service` from step #1.
           <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-parent</artifactId>
-            <version>Brixton.M1</version>
+            <version>Brixton.M3</version>
             <type>pom</type>
             <scope>import</scope>
           </dependency>
@@ -75,7 +86,7 @@ Add this to your `pom.xml` of the `reservation-service` from step #1.
     </dependencyManagement>
 
 - add `org.springframework.cloud`:`spring-cloud-starter-config` to the `reservation-service`.
-- create a `boostrap.properties` that lives in the same place as `application.properties` and discard the `application.properties` file. Instead, we now need only tell the Spring application where to find the Config Server, with `spring.cloud.config.uri=${config.server:http://localhost:8888}`, and how to identify itself to the Config Server and other services, later, with `spring.application.name`.
+- create a `bootstrap.properties` that lives in the same place as `application.properties` and discard the `application.properties` file. Instead, we now need only tell the Spring application where to find the Config Server, with `spring.cloud.config.uri=${config.server:http://localhost:8888}`, and how to identify itself to the Config Server and other services, later, with `spring.application.name`.
 - Run the Config Server
 
 > We'll copy and paste  `bootstrap.properties` for each subsequent module, changing only the `spring.application.name` as appropriate.
@@ -96,7 +107,6 @@ Add this to your `pom.xml` of the `reservation-service` from step #1.
 - use the Spring Initializr, setup a new module, `reservation-client`, that uses the Config Server (`org.springframework.cloud`:`spring-cloud-starter-config`), Eureka Discovery (`org.springframework.cloud`:`spring-cloud-starter-eureka`), and Web (`org.springframework.boot`:`spring-boot-starter-web`).
 - create a `bootstrap.properties`, just as with the other modules, but name this one `reservation-client`.
 - create a `CommandLineRunner` that uses the `DiscoveryClient` to look up other services programatically
-- **EXTRA CREDIT**: install [Consul](http://Consul.io) and replace Eureka with Consul. You could use `./bin/consul.sh`, but prepare yourself for some confusion around host resolution if you're running Docker inside a Vagrant VM.
 
 ## 5. Edge Services: API gateways (circuit breakers, client-side load balancing)
 > Edge services sit as intermediaries between the clients (smart phones, HTML5 applications, etc) and the service. An edge service is a logical place to insert any client-specific requirements (security, API translation, protocol translation) and keep the mid-tier services free of this burdensome logic (as well as free from associated redeploys!)
