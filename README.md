@@ -13,13 +13,13 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
   ```
 - create an environment variable called `DOCKER_HOST` that points to your Docker Toolbox machine. On OSX and Windows this will resolve to a virtual machine running in VirtualBox. If you're on OSX you can have it set with:
   ```
-  export DOCKER_HOME=`docker-machine ip default`
+  export DOCKER_HOST=`docker-machine ip default`
   ```
 
 - [Install the Cloud Foundry CLI](https://docs.cloudfoundry.org/devguide/installcf/install-go-cli.html)
 - go to the [Spring Initializr](http://start.spring.io) and specify the latest stable (non-`SNAPSHOT`) version of Spring Boot, click the link _Switch to the full version_, and then choose EVERY checkbox, then click _Generate Project_.
 - In the shell, run `mvn -DskipTests=true clean install` to force the resolution of all those dependencies so you're not stalled later. Then, run `mvn clean install` to force the resolution of the test scoped dependencies. You may discard this project after you've `install`ed everything.
-- run each of the `.sh` scripts in the `./bin` directory of the cloned Git repository for this workshop. Run `bin/psql.sh` after you've run `bin/postgresh.sh` and confirm that they all complete and emit no obvious errors
+- run `redis.sh`, `redis-cli.sh`, and `graphite.sh` of the `.sh` scripts in the `./bin` directory of the cloned Git repository for this workshop. Run `bin/psql.sh` after you've run `bin/postgresh.sh` and confirm that they all complete and emit no obvious errors
 - **VERY IMPORTANT** - go to [Pivotal Web Services](http://run.pivotal.io) and sign up for a Free Trial! You'll need an account to see this through to the end! No credit card is required, though you'll need a valid phone number!
 
 <!-- TODO which things should they run!  -->
