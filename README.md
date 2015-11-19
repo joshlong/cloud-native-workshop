@@ -13,7 +13,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
   ```
 - create an environment variable called `DOCKER_HOST` that points to your Docker Toolbox machine. On OSX and Windows this will resolve to a virtual machine running in VirtualBox. If you're on OSX you can have it set with:
   ```
-  export DOCKER_HOME=`docker-machine ip default`
+  export DOCKER_HOST=`docker-machine ip default`
   ```
 
 - [Install the Cloud Foundry CLI](https://docs.cloudfoundry.org/devguide/installcf/install-go-cli.html)
