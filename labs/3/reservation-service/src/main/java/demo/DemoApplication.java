@@ -1,8 +1,5 @@
 package demo;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 public class DemoApplication {
@@ -39,18 +35,6 @@ public class DemoApplication {
     @Bean
     HealthIndicator healthIndicator() {
         return () -> Health.status("I <3 Spring!").build();
-    }
-
-
-    @Bean
-    GraphiteReporter graphiteReporter(MetricRegistry registry,
-                                      @Value("${graphite.host}") String host,
-                                      @Value("${graphite.port}") int port) {
-        GraphiteReporter reporter = GraphiteReporter.forRegistry(registry)
-                .prefixedWith("reservations")
-                .build(new Graphite(host, port));
-        reporter.start(2, TimeUnit.SECONDS);
-        return reporter;
     }
 
     @Bean
@@ -89,12 +73,6 @@ public class DemoApplication {
         }
 
         protected void count(String evt, Reservation p) {
-//            LogstashMarker logstashMarker = Markers.append("event", evt)
-//                    .and(Markers.append("reservationName", p.getReservationName()))
-//                    .and(Markers.append("id", p.getId()));
-//
-//            LOGGER.info(logstashMarker, evt);
-
             this.counterService.increment(evt);
             this.counterService.increment("meter." + evt);
         }
