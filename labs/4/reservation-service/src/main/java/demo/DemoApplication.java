@@ -40,18 +40,6 @@ public class DemoApplication {
         return () -> Health.status("I <3 Spring!").build();
     }
 
-
-    @Bean
-    GraphiteReporter graphiteReporter(MetricRegistry registry,
-                                      @Value("${graphite.host}") String host,
-                                      @Value("${graphite.port}") int port) {
-        GraphiteReporter reporter = GraphiteReporter.forRegistry(registry)
-                .prefixedWith("reservations")
-                .build(new Graphite(host, port));
-        reporter.start(2, TimeUnit.SECONDS);
-        return reporter;
-    }
-
     @Bean
     CommandLineRunner runner(ReservationRepository rr) {
         return args ->
@@ -88,12 +76,6 @@ public class DemoApplication {
         }
 
         protected void count(String evt, Reservation p) {
-//            LogstashMarker logstashMarker = Markers.append("event", evt)
-//                    .and(Markers.append("reservationName", p.getReservationName()))
-//                    .and(Markers.append("id", p.getId()));
-//
-//            LOGGER.info(logstashMarker, evt);
-
             this.counterService.increment(evt);
             this.counterService.increment("meter." + evt);
         }
@@ -132,4 +114,3 @@ interface ReservationRepository extends JpaRepository<Reservation, Long> {
     @RestResource(path = "by-name")
     Collection<Reservation> findByReservationName(@Param("rn") String rn);
 }
-
