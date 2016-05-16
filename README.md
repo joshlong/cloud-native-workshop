@@ -118,7 +118,7 @@ Trigger a refresh of the message using the `/refresh` endpoint.
 - add `org.springframework.cloud`:`spring-cloud-starter-eureka` to the `reservation-service`
 - Add `@EnableDiscoveryClient` to the `reservation-service`'s `DemoApplication` and restart the process, and then confirm its appearance in the Eureka Server at `http://localhost:8761`
 - Demonstrate using the `DiscoveryClient` API
-- Use the Spring Initializr, setup a new module, `reservation-client`, that uses the Config Server (`org.springframework.cloud`:`spring-cloud-starter-config`), Eureka Discovery (`org.springframework.cloud`:`spring-cloud-starter-eureka`), and Web (`org.springframework.boot`:`spring-boot-starter-web`).
+- Use the Spring Initializr, setup a new module, `reservation-client`, that uses the Config Client (`org.springframework.cloud`:`spring-cloud-starter-config`), Eureka Discovery (`org.springframework.cloud`:`spring-cloud-starter-eureka`), and Web (`org.springframework.boot`:`spring-boot-starter-web`).
 - Create a `bootstrap.properties`, just as with the other modules, but name this one `reservation-client`.
 - Create a `CommandLineRunner` that uses the `DiscoveryClient` to look up other services programmatically
 
