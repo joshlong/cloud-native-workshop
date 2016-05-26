@@ -56,7 +56,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 ##  3. The Config Server
 
-> The [12 Factor](http://12factor.net/config) manifesto speaks about externalizing that which changes from one environment to another - hosts,  locators, passwords, etc. - from the application itself. Spring Boot readily supports this pattern, but it's not enough. In this lab, we'll look at how to centralize, externalize, and dynamically update application configuration with the Spring Cloud Config Server.
+> The [12 Factor](http://12factor.net/config) manifesto talks about externalizing that which changes from one environment to another - hosts,  locators, passwords, etc. - from the application itself. Spring Boot readily supports this pattern, but it's not enough. In this lab, we'll look at how to centralize, externalize, and dynamically update application configuration with the Spring Cloud Config Server.
 
 - Go to the Spring Initializr, choose the latest milestone of Spring Boot 1.3.x, specify an `artifactId` of `config-service` and add `Config Server` from the list of dependencies.
 - You should `git clone` the [Git repository for this workshop - https://github.com/joshlong/bootiful-microservices-config](`https://github.com/joshlong/bootiful-microservices-config.git`)
@@ -75,7 +75,7 @@ Example:
           <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-parent</artifactId>
-            <version>Brixton.M5</version>
+            <version>Brixton.RELEASE</version>
             <type>pom</type>
             <scope>import</scope>
           </dependency>
@@ -215,25 +215,34 @@ _Multi-day workshop_:
 
 > Distributed tracing lets us trace the path of a request from one service to another. It's very useful in understanding where a failure is occurring in a complex chain of calls.
 
-- run `./bin/zipkin.sh`
+- Go to the [Spring Initializr](http://start.spring.io) and select Zipkin UI, Zipkin Server, Eureka Discovery and Config Client, then Generate a new project. Open it in your IDE.
+- point the project to the config service and give it a `spring.application.name` of `zipkin-service`, as discussed earlier. Add `@EnableDiscoveryClient` to have it participate in service registration and discovery.
+- Add `@EnableZipkinServer` to the `zipkin-service` main class.
+- start the `zipkin-service`
+
+> Now, let's connect our services to the Zipkin service.
+
 - add `org.springframework.cloud`:`spring-cloud-starter-zipkin` to both the `reservation-service` and the `reservation-client`
-- configure a `@Bean` of type `AlwaysSampler` for both the `reservation-service` and `reservation-client`.
-- observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://$DOCKER_HOST:8080` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints.
+- observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://localhost:9411` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints. The `Dependencies` view in Zipkin shows you the topology of the cluster.
 
 ## 9. Security
 
 > in a distributed systems world, multiple clients might access multiple services and it becomes very important to have an easy-to-scale answer to the question: which clients may access which resources? The solution for this problem is single signon: all requests to a given resource present a token that may be redeemed with a centralized authentication service. We'll build an OAuth 2-powered authorization service and that secure our edge service to talk to it.
 
 - add `org.springframework.cloud`:`spring-cloud-starter-oauth2` to the `reservation-client`.
--
+- add `@EnableResourceServer` to the `reservation-client`'s main class.
 
-## Optimize for Velocity and Consistency
+> your application will need to talk to an authentication service that understands OAuth. You could use any of a number of valid services, like Github, Facebook, Google, or even an API Gateway product like Apigee. In our case, we'll connect to a custom Spring Security OAuth-powered `auth-service`.
+
+- go
+
+##  10. Optimize for Velocity and Consistency
 - create a parent dependency that in turn defines all the Git Commit ID plugins, the executable jars, etc.
 - package up common resources like `logstash.xml`
 - create a new stereotypical and task-centric Maven `starter` dependency that in turn brings in commonly used dependencies like `org.springframework.cloud`:`spring-cloud-starter-zipkin`, `org.springframework.cloud`:`spring-cloud-starter-eureka`,
 `org.springframework.cloud`:`spring-cloud-starter-config`, `org.springframework.cloud`:`spring-cloud-starter-stream-binder-rabbit`, `org.springframework.boot`:`spring-boot-starter-actuator`, `net.logstash.logback`:`logstash-logback-encoder`:`4.2`,
 - extract all the repeated code into auto-configuration: the `AlwaysSampler` bean, `@EnableDiscoveryClient`, the custom `HealthIndicator`s.
-- **EXTRA CREDIT**: define a Logger that is in turn a proxy that can only be injected using a custom qualfier (`@Logstash`)
+- **EXTRA CREDIT**: define a Logger that is in turn a proxy that can only be injected using a custom qualifier (`@Logstash`)
 
 ## Log Aggregation and Analysis with ELK
 - run `./bin/elk.sh`

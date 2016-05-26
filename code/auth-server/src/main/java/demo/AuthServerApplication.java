@@ -47,11 +47,9 @@ import java.util.stream.Stream;
 @EnableResourceServer
 public class AuthServerApplication {
 
-
 	public static void main(String[] args) {
 		SpringApplication.run(AuthServerApplication.class, args);
 	}
-
 }
 
 @Service
@@ -123,9 +121,9 @@ class Account {
 	Account() {
 	}
 
-	public Account(boolean active, String acccountName, String password) {
+	public Account(boolean active, String accountName, String password) {
 		this.active = active;
-		this.accountName = acccountName;
+		this.accountName = accountName;
 		this.password = password;
 	}
 
@@ -157,7 +155,6 @@ class SecurityConfig extends GlobalAuthenticationConfigurerAdapter {
 	public void init(AuthenticationManagerBuilder auth) throws Exception {
 		auth.userDetailsService(this.userDetailsService);
 	}
-
 }
 
 @Configuration
