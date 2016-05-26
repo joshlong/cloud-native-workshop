@@ -28,10 +28,10 @@ import java.security.Principal;
 
 /**
  * Easy to retrieve an access token using:
- * {@code curl -X POST -vu acme:acmesecret http://localhost:9999/uaa/oauth/token -H "Accept: application/json" -d "password=spring&username=jlong&grant_type=password&scope=openid&client_secret=acmesecret&client_id=acme" }
+ * {@code curl -X POST -vu acme:acmesecret http://localhost:9191/uaa/oauth/token -H "Accept: application/json" -d "password=spring&username=jlong&grant_type=password&scope=openid&client_secret=acmesecret&client_id=acme"  }
  * <p>
  * Then, send the access token to an OAuth2 secured REST resource using:
- * {@code curl http://localhost:9000/hi -H "Authorization: Bearer _INSERT TOKEN_"}
+ * {@code curl http://localhost:8050/hi -H "Authorization: Bearer _INSERT TOKEN_"}
  *
  * @author Dave Syer (THANK YOU DAVE!)
  * @author Josh Long
