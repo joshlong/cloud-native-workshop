@@ -18,6 +18,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 //import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -29,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-//@EnableOAuth2Client
+@EnableResourceServer
 @EnableBinding(ReservationChannels.class)
 @EnableZuulProxy
 @EnableCircuitBreaker
@@ -54,7 +55,6 @@ interface ReservationChannels {
 	MessageChannel output();
 }
 
-/*
 @RestController
 class UserInfoRestController {
 
@@ -63,7 +63,6 @@ class UserInfoRestController {
 		return p;
 	}
 }
-*/
 
 
 @RestController
