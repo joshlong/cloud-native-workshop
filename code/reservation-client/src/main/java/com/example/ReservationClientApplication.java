@@ -4,6 +4,7 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
 import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
@@ -22,24 +23,18 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-
-interface ReservationChannels {
-
-	@Output
-	MessageChannel output();
-}
-
+@EnableOAuth2Sso
 @EnableBinding(ReservationChannels.class)
 @EnableZuulProxy
 @EnableCircuitBreaker
 @EnableDiscoveryClient
 @SpringBootApplication
 public class ReservationClientApplication {
-
 
 	@Bean
 	@LoadBalanced
@@ -52,27 +47,39 @@ public class ReservationClientApplication {
 	}
 }
 
+interface ReservationChannels {
+
+	@Output
+	MessageChannel output();
+}
+
+@RestController
+class UserInfoRestController {
+
+	@RequestMapping("/user/info")
+	Principal principal(Principal p) {
+		return p;
+	}
+}
+
+
 @RestController
 @RequestMapping("/reservations")
 class ReservationServiceApiGatewayRestController {
 
+	private final MessageChannel channel;
+	private final RestTemplate restTemplate;
 
 	@RequestMapping(method = RequestMethod.POST)
 	public void write(@RequestBody Reservation reservation) {
-
 		this.channel.send(
-			MessageBuilder.withPayload( reservation.getReservationName()).build()
-		) ;
+				MessageBuilder.withPayload(reservation.getReservationName()).build()
+		);
 	}
-
-	private final MessageChannel channel;
-
-	private final RestTemplate restTemplate;
-
 
 	@Autowired
 	public ReservationServiceApiGatewayRestController(
-			RestTemplate restTemplate, ReservationChannels channels) {
+			@LoadBalanced RestTemplate restTemplate, ReservationChannels channels) {
 		this.restTemplate = restTemplate;
 		this.channel = channels.output();
 	}
