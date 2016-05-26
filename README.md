@@ -2,7 +2,7 @@
 
 The accompanying code for this workshop is [on Github](http://github.com/joshlong/cloud-native-workshop)
 
-## Setup  
+## Setup
 
 > microservices, for better or for worse, involve a lot of moving parts. Let's make sure we can run all those things in this lab.
 
@@ -18,16 +18,17 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > In this lab we'll take a look at building a basic Spring Boot application that uses JPA and Spring Data REST. We'll look at how to start a new project, how Spring Boot exposes functionality, and how testing works.
 
-- Go to the [Spring Initializr](http://start.spring.io) and select H2, REST Repositories, JPA, Vaadin, Web. Select the latest Spring Boot 1.3.x version. give it an `artifactId` of `reservation-service`.
+- Go to the [Spring Initializr](http://start.spring.io) and select H2, REST Repositories, JPA, Web. Select the latest Spring Boot 1.3.x version. give it an `artifactId` of `reservation-service`.
 - Run `mvn clean install` and import it into your favorite IDE using Maven import.
 - Add a simple entity (`Reservation`) and a repository (`ReservationRepository`)
 - Map the repository to the web by adding  `org.springframework.boot`:`spring-boot-starter-data-rest` and then annotating the repository with `@RepositoryRestResource`
 - Add custom Hypermedia links
 - Write a simple unit test
+- Observe that we have a Maven wrapper in the build to support reproducible builds
 
 ### Questions:
 - What is Spring? Spring, fundamentally, is a dependency injection container. This detail is unimportant. What is important is that once Spring is aware of all the objects - _beans_ - in an application, it can provide services to them to support different use cases like persistence, web services, web applications, messaging and integration, etc.
-- Why `.jar`s and not `.war`s? We've found that many organizations deploy only one, not many, application to one Tomcat/Jetty/whatever. They need to configure things like SSL, or GZIP compression, so they end up doing that in the container itself and - because they don't want the versioned configuration for the server to drift out of sync with the code, they end up version controlling the application server artifacts as well as the application itself! This implies a needless barrier between dev and ops which we struggle in every other place to remove.   
+- Why `.jar`s and not `.war`s? We've found that many organizations deploy only one, not many, application to one Tomcat/Jetty/whatever. They need to configure things like SSL, or GZIP compression, so they end up doing that in the container itself and - because they don't want the versioned configuration for the server to drift out of sync with the code, they end up version controlling the application server artifacts as well as the application itself! This implies a needless barrier between dev and ops which we struggle in every other place to remove.
 - How do I access the `by-name` search endpoint? Follow the links! visit `http://localhost:8080/reservations` and scroll down and you'll see _links_ that connect you to related resources. You'll see one for `search`. Follow it, find the relevant finder method, and then follow its link.
 
 
@@ -40,7 +41,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 - Add `org.springframework.boot`:`spring-boot-starter-actuator`
 - customize the `HealthEndpoint` by contributing a custom `HealthIndicator`
-- Start `./bin/graphite.sh`  
+- Start `./bin/graphite.sh`
 - Configure two environment variables `GRAPHITE_HOST` (`export GRAPHITE_HOST="$DOCKER_IP"`) and `GRAPHITE_PORT` (`2003`) (you may need to restart your IDE to _see_ these new environment variables)
 - Add a `GraphiteReporter` bean
 - Add `io.dropwizard.metrics`:`metrics-graphite`
@@ -55,12 +56,12 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 ##  3. The Config Server
 
-> The [12 Factor](http://12factor.net/config) manifesto speaks about externalizing that which changes from one environment to another - hosts,  locators, passwords, etc. - from the application itself. Spring Boot readily supports this pattern, but it's not enough. In this lab, we'll loko at how to centralize, externalize, and dynamically update application configuration with the Spring Cloud Config Server.
+> The [12 Factor](http://12factor.net/config) manifesto speaks about externalizing that which changes from one environment to another - hosts,  locators, passwords, etc. - from the application itself. Spring Boot readily supports this pattern, but it's not enough. In this lab, we'll look at how to centralize, externalize, and dynamically update application configuration with the Spring Cloud Config Server.
 
 - Go to the Spring Initializr, choose the latest milestone of Spring Boot 1.3.x, specify an `artifactId` of `config-service` and add `Config Server` from the list of dependencies.
 - You should `git clone` the [Git repository for this workshop - https://github.com/joshlong/bootiful-microservices-config](`https://github.com/joshlong/bootiful-microservices-config.git`)
 - In the Config Server's `application.properties`, specify that it should run on port 8888 (`server.port=8888`) and that it should manage the Git repository of configuration that lives in the root directory of the `git clone`'d  configuration. (`spring.cloud.config.server.git.uri=...`).
-- Add `@EnableConfigServer` to the `config-service` `DemoApplication`
+- Add `@EnableConfigServer` to the `config-service`'s root application
 - Add `server.port=8888` to the `application.properties` to ensure that the Config Server is running on the right port for service to find it.
 - Add the Spring Cloud BOM (you can copy it from the Config Server) to the `reservation-service`.
 
@@ -107,11 +108,11 @@ In the `reservation-service`, create a `MessageRestController` and annotate it w
 
 Trigger a refresh of the message using the `/refresh` endpoint.
 
-**EXTRA CREDIT**: Install RabbitMQ server and connect the microservice to the event bus by adding the `org.springframework.cloud`:`spring-cloud-starter-bus-amqp` then triggering the refresh using the `/bus/refresh`.
+**EXTRA CREDIT**: Install RabbitMQ server and connect the microservice to the the Spring Cloud Stream-based event bus and then triggering the refresh using the `/bus/refresh`.
 
 ## 4. Service Registration and Discovery
 
-> In the cloud, applications live and die as capacity dictates, they're ephemeral. Applications should not be coupled to the physical location of other services as this state is fleeting. Indeed, even if it were fixed, services may quickly become overwhelmed, so it's very handy to be able to specify how to load balance among the available instances or indeed ask the system to verify that there are instances at all. In this lab, we'll look at the low-level `DiscoveryClient` abstraction at the heart of Spring Cloud's service registration and discovery support.
+> In the cloud, services are often ephemeral and it's important to be able to talk to these services abstractly, without worrying about the host and ports for these services. At first blush, this seems like a use-case for DNS, but DNS fails in several key situations. How do we know if there's a service waiting on the other end of a DNS-mapped service that can respond? How do we support more sophisticated load-balancing than DNS + a typical loadbalancer can handle (e.g.: round-robin)? How do we avoid the extra hop outside of most cloud environments required to resolve DNS? For all of these and more, we want the effect of DNS - a dispatch table - without being coupled to DNS. We'll use a service registry and Spring Cloud's `DiscoveryClient` abstraction.
 
 - Go to the Spring Initializr, select the `Eureka Server` (this brings in `org.springframework.cloud`:`spring-cloud-starter-eureka-server`) checkbox, name it `eureka-service` and then add `@EnableEurekaServer` to the `DemoApplication` class.
 - Make sure this module _also_ talks to the Config Server as described in the last lab by adding the `org.springframework.cloud`:`spring-cloud-starter-config`.
@@ -194,7 +195,7 @@ _Multi-day workshop_:
 > Sources - like water from a faucet - describe where messages may come from. In our example, messages come from the `reservation-client` that wishes to write messages to the `reservation-service` from the API gateway.
 
 - add `@EnableBinding(Source.class)` to the `reservation-client` `DemoApplication`
-- create a new REST endpoint - a `POST` endpoint that accepts a `@RequestBody Reservation reservation` - in the `ReservationApiGatewayRestController` to accept new reservations  
+- create a new REST endpoint - a `POST` endpoint that accepts a `@RequestBody Reservation reservation` - in the `ReservationApiGatewayRestController` to accept new reservations
 - observe that the `Source.class` describes one or more Spring `MessageChannel`s which are themselves annotated with useful qualifiers like `@Output("output")`.
 - in the new endpoint, inject the Spring `MessageChannel` and qualify it with `@Output("output")` - the same one as in the `Source.class` definition.
 - use the `MessageChannel` to send a message to the `reservation-service`. Connect the two modules through a agreed upon name, which we'll call `reservations`.
@@ -204,7 +205,7 @@ _Multi-day workshop_:
 
 - add `@EnableBinding(Sink.class)` to the `reservation-service`  `DemoApplication`
 - observe that the `Sink.class` describes one or more Spring `MessageChannel`s which are themselves annotated with useful qualifiers like `@Input("input")`.
-- create a new `@MessagingEndpoint` that has a `@ServiceActivator`-annotated handler method to receive messages whose payload is of type `String`, the `reservationName` from the `reservation-client`.  
+- create a new `@MessagingEndpoint` that has a `@ServiceActivator`-annotated handler method to receive messages whose payload is of type `String`, the `reservationName` from the `reservation-client`.
 - use the `String` to save new `Reservation`s using an injected `ReservationRepository`
 - Observe that this is specified in the config server for us in the `reservation-client` module: `spring.cloud.stream.bindings.input=reservations`. `input` is arbitrary and refers to the (arbitrary) channel of the same name described in the `Sink.class` definition.
 
