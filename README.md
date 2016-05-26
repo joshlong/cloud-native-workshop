@@ -220,14 +220,12 @@ _Multi-day workshop_:
 - configure a `@Bean` of type `AlwaysSampler` for both the `reservation-service` and `reservation-client`.
 - observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://$DOCKER_HOST:8080` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints.
 
-## Security
+## 9. Security
+
+> in a distributed systems world, multiple clients might access multiple services and it becomes very important to have an easy-to-scale answer to the question: which clients may access which resources? The solution for this problem is single signon: all requests to a given resource present a token that may be redeemed with a centralized authentication service. We'll build an OAuth 2-powered authorization service and that secure our edge service to talk to it.
+
 - add `org.springframework.cloud`:`spring-cloud-starter-oauth2` to the `reservation-client`.
-- add `@EnableOAuthSso`
-- observe that we've already pointed it to use GitHub for authentication in the config server's `application.properties`
-- in the `reservation-client`, create a new REST endpoint called `/user/info` and use it to expose the authenticated principal to the authenticated client.
-- confirm this works by launching a new browser in incognito mode and then hitting the protected resource
-- switch to a qualified `loadBalancedOauth2RestTemplate` instead of any old `@RestTemplate`.
-- **EXTRA CREDIT**: use Spring Security OAuth's Authroization Server instead of GitHub
+-
 
 ## Optimize for Velocity and Consistency
 - create a parent dependency that in turn defines all the Git Commit ID plugins, the executable jars, etc.

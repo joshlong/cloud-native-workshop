@@ -30,19 +30,23 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-config</artifactId>
 		</dependency>
-		 <dependency>
+		 <!--<dependency>
 			 <groupId>org.springframework.boot</groupId>
 			 <artifactId>spring-boot-starter-jdbc</artifactId>
-		 </dependency>
+		 </dependency>-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
 		 <!-- for auth server -->
 		 <dependency>
 			 <groupId>org.springframework.boot</groupId>
 			 <artifactId>spring-boot-starter-web</artifactId>
 		 </dependency>
-		 <dependency>
+		<!-- <dependency>
 			 <groupId>org.springframework.boot</groupId>
 			 <artifactId>spring-boot-starter-security</artifactId>
-		 </dependency>
+		 </dependency>-->
 		 <dependency>
 			 <groupId>org.springframework.security.oauth</groupId>
 			 <artifactId>spring-security-oauth2</artifactId>
