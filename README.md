@@ -234,7 +234,17 @@ _Multi-day workshop_:
 
 > your application will need to talk to an authentication service that understands OAuth. You could use any of a number of valid services, like Github, Facebook, Google, or even an API Gateway product like Apigee. In our case, we'll connect to a custom Spring Security OAuth-powered `auth-service`.
 
-- go
+- Go to the [Spring Initializr](http://start.spring.io) and select H2, the Config Client, Eureka Discovery, Web support, and name the project `auth-service`.
+- in the resulting Maven `pom.xml`, add `org.springframework.cloud`:`spring-cloud-starter-oauth2`
+- add `@EnableResourceServer` to the main class for the application
+- create a new REST controller, `PrincipalRestController`, that - when asked - returns the current authenticated `javax.security.Principal`.
+- create an implementation of the `org.springframework.security.core.userdetails.UserDetailsService` contract. A simple implementation might defer to a table of records in a database. In this example we use a simple `Account` JPA entity to map this information from a SQL database. We use a simple Spring Data JPA _repository_ implementation to read JPA records from the database.
+- With a working `UserDetailsService` implementation in place, it's time to plugin the implementation to Spring Security and Spring Security OAuth. The first thing we need to do is provide an implementation of the `GlobalAuthenticationConfigurerAdapter` base type, adding `@EnableGlobalAuthentication` and calling the `AuthenticationManagerBuilder#userDetailsService(UserDetailsService)` implementation in the `GlobalAuthenticationConfigurerAdapter#init(AuthenticationManagerBuilder)` method override. This is standard Spring Security; it tells Spring Security how to answer questions about users in the system.
+- Finally, we need to provide an implementation of `AuthorizationServerConfigurerAdapter` and override two of the `configure(..)` methods.
+- the first override, `AuthorizationServerConfigurerAdapter#configure(AuthorizationServerEndpointsConfigurer)`, should provide an injected `AuthenticationManager` to the `AuthorizationServerEndpointsConfigurer#authenticationManager(AuthenticationManager)` method.
+- the second override, `AuthorizationServerConfigurerAdapter#configure(ClientDetailsServiceConfigurer)`, should define OAuth clients. In OAuth, identity is composed of some notion of a user, `bob`, for example, _and_ a client (`bob`'s HTML5 client, `bob`'s iPhone, `bob`'s Android tablet, etc). Different clients can make differnet guarantees about the amount of security they can support. Our example will define a simple client, `acme`, with a secret password, `acmesecret`, three authorized grant types (`authorization_code`, `refresh_token`, `password`) and a single scope (`openid`)
+
+
 
 ##  10. Optimize for Velocity and Consistency
 - create a parent dependency that in turn defines all the Git Commit ID plugins, the executable jars, etc.

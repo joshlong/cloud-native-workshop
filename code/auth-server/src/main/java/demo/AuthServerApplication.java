@@ -53,12 +53,12 @@ public class AuthServerApplication {
 }
 
 @Service
-class DatabaseUserDetailsService implements UserDetailsService {
+class AccountUserDetailsService implements UserDetailsService {
 
 	private final AccountRepository accountRepository;
 
 	@Autowired
-	public DatabaseUserDetailsService(AccountRepository accountRepository) {
+	public AccountUserDetailsService(AccountRepository accountRepository) {
 		this.accountRepository = accountRepository;
 	}
 
