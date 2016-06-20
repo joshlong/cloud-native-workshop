@@ -243,6 +243,13 @@ _Multi-day workshop_:
 - Finally, we need to provide an implementation of `AuthorizationServerConfigurerAdapter` and override two of the `configure(..)` methods.
 - the first override, `AuthorizationServerConfigurerAdapter#configure(AuthorizationServerEndpointsConfigurer)`, should provide an injected `AuthenticationManager` to the `AuthorizationServerEndpointsConfigurer#authenticationManager(AuthenticationManager)` method.
 - the second override, `AuthorizationServerConfigurerAdapter#configure(ClientDetailsServiceConfigurer)`, should define OAuth clients. In OAuth, identity is composed of some notion of a user, `bob`, for example, _and_ a client (`bob`'s HTML5 client, `bob`'s iPhone, `bob`'s Android tablet, etc). Different clients can make differnet guarantees about the amount of security they can support. Our example will define a simple client, `acme`, with a secret password, `acmesecret`, three authorized grant types (`authorization_code`, `refresh_token`, `password`) and a single scope (`openid`)
+- You should be able to generate a new token using 
+    ```
+    curl -X POST -vu acme:acmesecret http://localhost:9191/uaa/oauth/token -H "Accept: application/json" -d "password=spring&username=jlong&grant_type=password&scope=openid&client_secret=acmesecret&client_id=acme" 
+    ```
+    Then, send the access token to an OAuth2 secured REST resource using: 
+    
+    ``` curl http://localhost:9999/reservations/names -H "Authorization: Bearer _INSERT TOKEN_" ```
 
 
 
