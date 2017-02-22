@@ -9,7 +9,8 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>auth-server</module>
+        <module>auth-service</module>
+        <module>dataflow-service</module>
         <module>reservation-client</module>
         <module>reservation-service</module>
         <module>hystrix-dashboard</module>
