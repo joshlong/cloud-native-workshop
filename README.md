@@ -48,7 +48,7 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 - Build an executable `.jar` (UNIX-specific) using the `<executable/>` configuration flag
 - Add the HAL browser - `org.springframework.data`:`spring-data-rest-hal-browser` and view the Actuator endpoints using that
 - Configure Maven resource filtering and the Git commit ID plugin in the `pom.xml` in all existing and subsequent `pom.xml`s, or extract out a common parent `pom.xml` that all modules may extend.
-- Add `info.build.artifact=${project.artifactId}` and `info.build.version=${project.version}`  to `application.properties`.
+- Add `info.build.artifact=@project.artifactId@` and `info.build.version=@project.version@`  to `application.properties`.
 - Introduce a new `@RepositoryEventHandler` and `@Component`. Provide handlers for `@HandleAfterCreate`, `@HandleAfterSave`, and `@HandleAfterDelete`. Extract common counters to a shared method
 - Add a semantic metric using `CounterService` and observe the histogram in Graphite
 
@@ -98,7 +98,7 @@ Example:
 
 Next:
 
-Create a `boostrap.properties` that lives in the same place as `application.properties` and discard the `application.properties` file. Now we need only to tell the Spring application where to find the Config Server, with the property `spring.cloud.config.uri=${config.server:http://localhost:8888}`, and how to identify itself to the Config Server and other services, later, with `spring.application.name`.
+Create a `boostrap.properties` that lives in the same place as `application.properties` and discard the `application.properties` file. Now we need only to tell the Spring application where to find the Config Server, with the property `spring.cloud.config.uri=@config.server:http://localhost:8888@`, and how to identify itself to the Config Server and other services, later, with `spring.application.name`.
 
 Now, run the Config Server:
 
