@@ -6,25 +6,26 @@ The accompanying code for this workshop is [on Github](http://github.com/joshlon
 
 > microservices, for better or for worse, involve a lot of moving parts. Let's make sure we can run all those things in this lab.
 
-- You will need JDK 8, Maven, an IDE and Docker in order to follow along. Specify important environment variables before opening any IDEs: `JAVA_HOME`, `DOCKER_HOST`.
-- Install [the Spring Boot CLI](http://docs.spring.io/autorepo/docs/spring-boot/current/reference/html/getting-started-installing-spring-boot.html#getting-started-installing-the-cli) and [the Spring Cloud CLI](https://github.com/spring-cloud/spring-cloud-cli).
+- In this workshop you'll need the latest Java version. Java 8 is the baseline for this workshop.
+- You'll need a newer, 3.1, version of Apache Maven installed.
+- You'll need an IDE installed. Something like Apache NetBeans, Eclipse, or IntelliJ IDEA.
+- You might want to use the [the Spring Boot CLI](http://docs.spring.io/autorepo/docs/spring-boot/current/reference/html/getting-started-installing-spring-boot.html#getting-started-installing-the-cli) and [the Spring Cloud CLI](https://github.com/spring-cloud/spring-cloud-cli). Neither is required but you could use them to replace a lot of code, later.
 - [Install the Cloud Foundry CLI](https://docs.cloudfoundry.org/devguide/installcf/install-go-cli.html)
-- Go to the [Spring Initializr](http://start.spring.io) and specify the latest milestone of Spring Boot 1.3 and then choose EVERY checkbox except those related to AWS or Consul, then click generate. In the shell, run `mvn -DskipTests=true clean install` to force the resolution of all those dependencies so you're not stalled later. Then, run `mvn clean install` to force the resolution of the test scoped dependencies. You may discard this project after you've `install`ed everything.
+- Go to the [Spring Initializr](http://start.spring.io) and use the latest stable version of Spring Boot. If you are doing this in a workshop setting where internet connectivity is constrained, you'll want to pre-cache the Maven dependencies before starting. Go to the Spring Initializr and   choose EVERY checkbox except those related to AWS, Zookeeper, or Consul, then click _Generate_. In the shell, run `mvn -DskipTests=true clean install` to force the resolution of all those dependencies so you're not stalled later. Then, run `mvn clean install` to force the resolution of the test scoped dependencies. You may discard this project after you've run the commands. This will download whatever artifacts are most current to your local Maven repository (usually, `.m2/repository`).
 - _For multi-day workshops only_: Run each of the `.sh` scripts in the `./bin` directory; run `psql.sh` after you've run `postgresh.sh` and confirm that they all complete and emit no obvious errors
 
-(_Some versions of this workshop will not use Docker_)
 
 ## 1. "Bootcamp"
 
 > In this lab we'll take a look at building a basic Spring Boot application that uses JPA and Spring Data REST. We'll look at how to start a new project, how Spring Boot exposes functionality, and how testing works.
 
-- Go to the [Spring Initializr](http://start.spring.io) and select H2, REST Repositories, JPA, Web. Select the latest Spring Boot 1.3.x version. give it an `artifactId` of `reservation-service`.
-- Run `mvn clean install` and import it into your favorite IDE using Maven import.
-- Add a simple entity (`Reservation`) and a repository (`ReservationRepository`)
-- Map the repository to the web by adding  `org.springframework.boot`:`spring-boot-starter-data-rest` and then annotating the repository with `@RepositoryRestResource`
-- Add custom Hypermedia links
-- Write a simple unit test
-- Observe that we have a Maven wrapper in the build to support reproducible builds
+- Go to the [Spring Initializr](http://start.spring.io) and select `Web`, `JPA`, `H2`, `Actuator`, `Config Client`, `Eureka Discovery`, `Lombok`, `Zipkin Client`, `Stream Rabbit`, `Cloud Contract Verifier` and `Integration`. Specify an `artifactId` of `reservation-service`.
+- Click `Generate` and then unzip the archive. Change into the directory of the unzipped project and then run `mvn clean install`.
+- Open the project in your favorite IDE using Maven import.
+- Open `pom.xml` and comment out dependencies that we don't need, for the moment, including: `org.springframework.cloud`:`spring-cloud-starter-stream-rabbit`, `org.springframework.cloud`:`spring-cloud-starter-config`, `org.springframework.cloud`:`spring-cloud-starter-zipkin`, and `org.springframework.cloud`:`spring-cloud-starter-eureka`.
+- Add a simple entity (`Reservation`) with an `id` field and a `reservationName` field. Use Lombok to synthesize getters/setters, all-argument and no-argument constructors.
+- create a new JPA repository (`ReservationRepository`)
+- Observe that we have a Maven wrapper (`./mvnw`) in the build to support reproducible builds
 
 ### Questions:
 - What is Spring? Spring, fundamentally, is a dependency injection container. This detail is unimportant. What is important is that once Spring is aware of all the objects - _beans_ - in an application, it can provide services to them to support different use cases like persistence, web services, web applications, messaging and integration, etc.
@@ -118,13 +119,16 @@ Trigger a refresh of the message using the `/refresh` endpoint.
 - Make sure this module _also_ talks to the Config Server as described in the last lab by adding the `org.springframework.cloud`:`spring-cloud-starter-config`.
 - add `org.springframework.cloud`:`spring-cloud-starter-eureka` to the `reservation-service`
 - Add `@EnableDiscoveryClient` to the `reservation-service`'s `DemoApplication` and restart the process, and then confirm its appearance in the Eureka Server at `http://localhost:8761`
-- Demonstrate using the `DiscoveryClient` API
-- Use the Spring Initializr, setup a new module, `reservation-client`, that uses the Config Client (`org.springframework.cloud`:`spring-cloud-starter-config`), Eureka Discovery (`org.springframework.cloud`:`spring-cloud-starter-eureka`), and Web (`org.springframework.boot`:`spring-boot-starter-web`).
+
+> you have a service registry and now you have a single service registered and advertising its presence. Let's take advantage of that in an edge service, which we'll call `reservation-client`.
+
+- Use the Spring Initializr, setup a new module, `reservation-client`, with the `Web`, `Lombok`, `Feign`, `Zuul`, `Hystrix`, `Stream Rabbit`, `Eureka Discovery`, `Config Client`, `Cloud OAuth2`, and `Zipkin Client` dependencies.
+- open `pom.xml` and comment out the dependencies that are neither needed nor workable without some extra configuration (which we'll get to later): `org.springframework.cloud`:`spring-cloud-starter-oauth2`, `org.springframework.cloud`:`spring-cloud-starter-stream-rabbit`, and  `org.springframework.cloud`:`spring-cloud-starter-zipkin`.
 - Create a `bootstrap.properties`, just as with the other modules, but name this one `reservation-client`.
 - Create a `CommandLineRunner` that uses the `DiscoveryClient` to look up other services programmatically
 
 
-**EXTRA CREDIT**: Install [Consul](http://Consul.io) and replace Eureka with Consul. You could use `./bin/consul.sh`, but prepare yourself for some confusion around host resolution if you're running Docker inside a Vagrant VM.
+
 
 ## 5. Edge Services: API gateways (circuit breakers, client-side load balancing)
 > Edge services sit as intermediaries between the clients (smart phones, HTML5 applications, etc) and the service. An edge service is a logical place to insert any client-specific requirements (security, API translation, protocol translation) and keep the mid-tier services free of this burdensome logic (as well as free from associated redeploys!)
@@ -225,7 +229,18 @@ _Multi-day workshop_:
 - add `org.springframework.cloud`:`spring-cloud-starter-zipkin` to both the `reservation-service` and the `reservation-client`
 - observe that as messages flow in and out of the `reservation-client`, you can observe their correspondances and sequences in a waterfall graph in the ZipKin web UI at `http://localhost:9411` by drilling down to the service of choice. You can further drill down to see the headers and nature of the exchange between endpoints. The `Dependencies` view in Zipkin shows you the topology of the cluster.
 
-## 9. Security
+
+## 9. Consumer Driven Contract Testing
+
+> we've built a trivial API with an even more trivial client (thanks to the `RestTemplate` or `Feign`). We've done a good job on day one of our journey. What happens on day two or at any point down the line after the API has changed but the client that uses it has updated accordingly? What happens when the producer of the API changes the API? Does this break the client? It's important that we capture such breaking changes as early and often as possible. In a monolithic application the incompatible updates to the producer of an API would be caught on the first compile. Refactoring would help us prevent these problems, as well. In a distributed systems world, these incompatible changes are harder to catch. They get caught in the integration tests. integration tests are among the slowest of the tests you should have in your system. They're towards the top of the testing pyramid because they're _expensive_ - both in terms of time and computational resources. In order to run the tests we'd need to run both client and service and all supporting infrastructure. This is a worst-case scenario; organizations move to microservices to accelerate feedback (which in turn yields learning and improvement), _not_ to reduce it! What we need is some way to capture breaking changes that keeps both producer and consumer in sync _and_ that doesn't constrain velocity of feedback. Spring Cloud Contract, and consumer driven contracts and consumer driven contract testing, make this work easier. The idea is that contract definitions are used to capture the expected behavior of an API for a particular client. This may incldue all the quirks of particular clients, and it may incluhde older clients using older APIs. A producer may capture as many contract scenarios as needed. These contracts are enforced bilaterally. On the producer side, the Spring Cloud Contract verifier turns the contract into a Spring MVC Test Framework test that fails if the actual API doesn't work as the contract stipulates. On the consumer, clients can run test against actual HTTP (or messaging-based) APIs that are themselves stubs. These stubs are _stubs_ - that is, there's no real business logic behind them. Just pre-configured responses defined by the contracts. As the stub is defined entirely by the contract, it is trivially cheap to run the stub APIs and exercise clients against them. As the stubs are only ever available _if_ the producer passes all its tests, this ensures that the client is building and testing against a reflection of the latest and actual API, _not_ the understanding of the API implied when the client test was originally written.
+
+
+
+> Spring Cloud Contract supports clients and services written with Spring in mind but can they help us when developing clients in other languages?
+
+
+
+## 10. Security
 
 > in a distributed systems world, multiple clients might access multiple services and it becomes very important to have an easy-to-scale answer to the question: which clients may access which resources? The solution for this problem is single signon: all requests to a given resource present a token that may be redeemed with a centralized authentication service. We'll build an OAuth 2-powered authorization service and that secure our edge service to talk to it.
 
@@ -243,28 +258,37 @@ _Multi-day workshop_:
 - Finally, we need to provide an implementation of `AuthorizationServerConfigurerAdapter` and override two of the `configure(..)` methods.
 - the first override, `AuthorizationServerConfigurerAdapter#configure(AuthorizationServerEndpointsConfigurer)`, should provide an injected `AuthenticationManager` to the `AuthorizationServerEndpointsConfigurer#authenticationManager(AuthenticationManager)` method.
 - the second override, `AuthorizationServerConfigurerAdapter#configure(ClientDetailsServiceConfigurer)`, should define OAuth clients. In OAuth, identity is composed of some notion of a user, `bob`, for example, _and_ a client (`bob`'s HTML5 client, `bob`'s iPhone, `bob`'s Android tablet, etc). Different clients can make differnet guarantees about the amount of security they can support. Our example will define a simple client, `acme`, with a secret password, `acmesecret`, three authorized grant types (`authorization_code`, `refresh_token`, `password`) and a single scope (`openid`)
-- You should be able to generate a new token using 
+- You should be able to generate a new token using
     ```
-    curl -X POST -vu acme:acmesecret http://localhost:9191/uaa/oauth/token -H "Accept: application/json" -d "password=spring&username=jlong&grant_type=password&scope=openid&client_secret=acmesecret&client_id=acme" 
+    curl -X POST -vu acme:acmesecret http://localhost:9191/uaa/oauth/token -H "Accept: application/json" -d "password=spring&username=jlong&grant_type=password&scope=openid&client_secret=acmesecret&client_id=acme"
     ```
-    Then, send the access token to an OAuth2 secured REST resource using: 
-    
-    ``` curl http://localhost:9999/reservations/names -H "Authorization: Bearer _INSERT TOKEN_" ```
+    Then, send the access token to an OAuth2 secured REST resource using:
 
+    ```
+    curl http://localhost:9999/reservations/names -H "Authorization: Bearer _INSERT TOKEN_"
+    ```
 
+##  11. Optimize for Velocity and Consistency
 
-##  10. Optimize for Velocity and Consistency
+> Thus far we've looked at building applications with Spring Boot and Spring Cloud, layering in the various technologies as we've learned about them and needed them. It's been a fun process of discovery (hopefully!), but this shouldn't be required for _every_ developer. Instead, you should package up best-practices as Spring Boot starter dependencies and auto-configurations. Codifying these best practices helps get past the endless list of non-functional requirements required to go to production.
+
 - create a parent dependency that in turn defines all the Git Commit ID plugins, the executable jars, etc.
 - package up common resources like `logstash.xml`
 - create a new stereotypical and task-centric Maven `starter` dependency that in turn brings in commonly used dependencies like `org.springframework.cloud`:`spring-cloud-starter-zipkin`, `org.springframework.cloud`:`spring-cloud-starter-eureka`,
 `org.springframework.cloud`:`spring-cloud-starter-config`, `org.springframework.cloud`:`spring-cloud-starter-stream-binder-rabbit`, `org.springframework.boot`:`spring-boot-starter-actuator`, `net.logstash.logback`:`logstash-logback-encoder`:`4.2`,
 - extract all the repeated code into auto-configuration: the `AlwaysSampler` bean, `@EnableDiscoveryClient`, the custom `HealthIndicator`s.
-- **EXTRA CREDIT**: define a Logger that is in turn a proxy that can only be injected using a custom qualifier (`@Logstash`)
+- **EXTRA CREDIT**: define a Logger that is in turn a bean defined using Spring Framework's support for `InjectionPoint`s. You can qualify this bean with a custom qualifier (`@Logger`).
+- **EXTRA CREDIT**: customize the Spring Initializr. The Spring Initializr is itself an open-source project. You can find the code for [the Spring Initializr on Github](https://github.com/spring-io/initializr). It is itself an auto-configuration. build and install the Spring Initializr and then create a new Spring Boot application. Add the Initializr dependency to your new Spring Boot application and then configure which checkboxes are shown by overriding the configuration in `application.properties` or, more likely, `appication.yml`. Now you have your own Spring Initializr, with your own checkboxes and auto-configurations. Host this on Cloud Foundry (or anywhere, really) and point people in your organization to it for all their new-project needs.
 
-## Log Aggregation and Analysis with ELK
+## 12. Log Aggregation and Analysis with ELK
+
+> For all the fancy new technologies we have today, the venerable log file still reigns supreme. Modern logs, are more than strings blurted out by code in the dead of night. They _should_ be structured data. In this exercise we'll write our logs using Logstash and then publish them to an ElasticSearch cluster.
+
 - run `./bin/elk.sh`
 - add `net.logstash.logback`:`logstash-logback-encoder`:`4.2` to the `reservation-service` and `reservation-client`
 - add `logback.xml` to each project's `resources` directory. it should be configured to point to the value of `$DOCKER_HOST` or some DNS entry
 - import `org.slf4j.Logger` and `org.slf4j.LoggerFactory`
 - declare a logger: `Logger LOGGER = LoggerFactory.getLogger( DemoApplication.class);`
 - in the `reservation-service`, use `LogstashMarker`s to emit interesting semantic logs to be collected by the Kibana UI at `http://$DOCKER_HOST:...`
+
+## 13. Cloud Native Data Processing with Spring Cloud Data Flow
