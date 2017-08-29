@@ -3,11 +3,13 @@ package com.example.authservice;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -23,7 +25,12 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,12 +38,28 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.*;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 @SpringBootApplication
 public class AuthServiceApplication {
+
+    @Value("${security.oauth2.provider.key-store}")
+    String keyStoreLocation;
+
+    @Value("${security.oauth2.provider.key-store-alias}")
+    String keyStoreAlias;
+
+    @Value("${security.oauth2.provider.key-store-password}")
+    String keyStorePassword;
+
+    @Value("${security.oauth2.provider.key-password}")
+    String keyPassword;
 
     public static void main(String[] args) {
         SpringApplication.run(AuthServiceApplication.class, args);
@@ -51,6 +74,31 @@ public class AuthServiceApplication {
             accountRepository.findAll().forEach(System.out::println);
         };
     }
+
+    @Bean
+    TokenStore jwtTokenStore() throws Exception {
+        return new JwtTokenStore(this.jwtAccessTokenConverter());
+    }
+
+    @Bean
+    JwtAccessTokenConverter jwtAccessTokenConverter() throws Exception {
+        JwtAccessTokenConverter jwtAccessTokenConverter = new JwtAccessTokenConverter();
+        jwtAccessTokenConverter.setKeyPair(this.obtainKeyPair());
+        return jwtAccessTokenConverter;
+    }
+
+    private KeyPair obtainKeyPair() throws GeneralSecurityException, IOException {
+        File keyStoreFile = new ClassPathResource(this.keyStoreLocation).getFile();
+
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(new FileInputStream(keyStoreFile), this.keyStorePassword.toCharArray());
+
+        PrivateKey privateKey = (PrivateKey)keyStore.getKey(this.keyStoreAlias, this.keyPassword.toCharArray());
+        java.security.cert.Certificate cert = keyStore.getCertificate(this.keyStoreAlias);
+        PublicKey publicKey = cert.getPublicKey();
+
+        return new KeyPair(publicKey, privateKey);
+    }
 }
 
 @Configuration
@@ -58,9 +106,11 @@ public class AuthServiceApplication {
 class AuthServerConfiguration extends AuthorizationServerConfigurerAdapter {
 
     private final AuthenticationManager authenticationManager;
+    private final AccessTokenConverter accessTokenConverter;
 
-    AuthServerConfiguration(AuthenticationManager authenticationManager) {
+    AuthServerConfiguration(AuthenticationManager authenticationManager, AccessTokenConverter accessTokenConverter) {
         this.authenticationManager = authenticationManager;
+        this.accessTokenConverter = accessTokenConverter;
     }
 
     @Override
@@ -81,7 +131,9 @@ class AuthServerConfiguration extends AuthorizationServerConfigurerAdapter {
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-        endpoints.authenticationManager(this.authenticationManager);
+        endpoints
+            .authenticationManager(this.authenticationManager)
+            .accessTokenConverter(this.accessTokenConverter);
     }
 }
 
@@ -89,12 +141,23 @@ class AuthServerConfiguration extends AuthorizationServerConfigurerAdapter {
 @EnableResourceServer
 class ResourceServerConfiguration extends ResourceServerConfigurerAdapter {
 
+    private final TokenStore tokenStore;
+
+    ResourceServerConfiguration(TokenStore tokenStore) {
+        this.tokenStore = tokenStore;
+    }
+
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http
             .authorizeRequests()
                 .antMatchers("/user").access("#oauth2.hasScope('openid')")
                 .anyRequest().authenticated();
+    }
+
+    @Override
+    public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
+        resources.tokenStore(this.tokenStore);
     }
 }
 
