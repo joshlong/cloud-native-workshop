@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,7 +21,9 @@ import org.springframework.security.oauth2.config.annotation.configurers.ClientD
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,11 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import java.security.Principal;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-@EnableResourceServer
 @SpringBootApplication
 public class AuthServiceApplication {
 
@@ -50,38 +53,73 @@ public class AuthServiceApplication {
     }
 }
 
-@RestController
-class PrincipalRestController {
-
-    @RequestMapping("/user")
-    Principal principal(Principal p) {
-        return p;
-    }
-}
-
 @Configuration
 @EnableAuthorizationServer
-class OAuthConfiguration extends AuthorizationServerConfigurerAdapter {
+class AuthServerConfiguration extends AuthorizationServerConfigurerAdapter {
 
     private final AuthenticationManager authenticationManager;
 
-    OAuthConfiguration(AuthenticationManager authenticationManager) {
+    AuthServerConfiguration(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
     }
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients
-                .inMemory()
+            .inMemory()
                 .withClient("html5")
-                .scopes("openid")
-                .secret("password")
-                .authorizedGrantTypes("password");
+                    .scopes("openid")
+                    .secret("password")
+                    .authorizedGrantTypes("password")
+                    .and()
+                .withClient("uaa")
+                    .secret("secret")
+                    .scopes("openid")
+                    .redirectUris("http://localhost:8080/oauth2/authorize/code/uaa")
+                    .authorizedGrantTypes("authorization_code");
     }
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints.authenticationManager(this.authenticationManager);
+    }
+}
+
+@Configuration
+@EnableResourceServer
+class ResourceServerConfiguration extends ResourceServerConfigurerAdapter {
+
+    @Override
+    public void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests()
+                .antMatchers("/user").access("#oauth2.hasScope('openid')")
+                .anyRequest().authenticated();
+    }
+}
+
+@RestController
+class UserInfoController {
+
+    @RequestMapping("/user")
+    public UserInfo userInfo(OAuth2Authentication authentication) {
+        return new UserInfo(authentication);
+    }
+
+    public class UserInfo {
+        private final OAuth2Authentication authentication;
+
+        public UserInfo(OAuth2Authentication authentication) {
+            this.authentication = authentication;
+        }
+
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return this.authentication.getAuthorities();
+        }
+
+        public String getName() {
+            return this.authentication.getName();
+        }
     }
 }
 
