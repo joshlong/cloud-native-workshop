@@ -1,29 +1,28 @@
-
 package com.example.reservationservice;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.cloud.context.scope.refresh.RefreshScopeRefreshedEvent;
 import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.cloud.stream.annotation.Input;
 import org.springframework.cloud.stream.annotation.StreamListener;
+import org.springframework.cloud.stream.messaging.Sink;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.support.GenericHandler;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHandler;
-import org.springframework.messaging.MessagingException;
-import org.springframework.messaging.SubscribableChannel;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,60 +31,51 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.util.Collection;
-import java.util.Map;
 import java.util.stream.Stream;
 
-
-@EnableBinding(ConsumerChannels.class)
+@EnableBinding(Sink.class)
 @EnableDiscoveryClient
 @SpringBootApplication
 public class ReservationServiceApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(ReservationServiceApplication.class, args);
-    }
-
     @Bean
-    CommandLineRunner init(ReservationRepository rr) {
-        return args -> {
-            Stream.of("Josh", "Heidi", "Cameron", "Saritha",
-                    "Balaji", "Soumya", "Steve", "Kelsey")
-                    .forEach(name -> rr.save(new Reservation(name)));
-
-            rr.findAll().forEach(System.out::println);
-        };
-    }
-
-    @Bean
-    IntegrationFlow inboundReservationFlow(ConsumerChannels channels,
-                                           ReservationRepository rr) {
+    IntegrationFlow incomingReservations(Sink sink, ReservationRepository rr) {
         return IntegrationFlows
-                .from(channels.input())
+                .from(sink.input())
                 .handle((GenericHandler<String>) (reservationName, headers) -> {
-                    rr.save(new Reservation(reservationName));
+                    rr.save(new Reservation(null, reservationName));
                     return null;
                 })
                 .get();
     }
-}
-/*
-@Component
-class StreamListenerComponent {
 
-    @StreamListener ("input")
-    public void on( String reservationName) {
-
+    public static void main(String[] args) {
+        SpringApplication.run(ReservationServiceApplication.class, args);
     }
-}*/
-
-interface ConsumerChannels {
-    @Input
-    SubscribableChannel input();
 }
+
+@Component
+class SampleDataInitializer implements ApplicationRunner {
+
+    private final ReservationRepository reservationRepository;
+
+    SampleDataInitializer(ReservationRepository reservationRepository) {
+        this.reservationRepository = reservationRepository;
+    }
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        Stream.of("Josh", "Jaya", "John", "Danny",
+                "Brian", "Quyen", "Dan", "Alex")
+                .forEach(name -> reservationRepository.save(new Reservation(null, name)));
+
+        reservationRepository.findAll().forEach(System.out::println);
+    }
+}
+
 
 @RestController
 class ReservationRestController {
-
 
     private final ReservationRepository reservationRepository;
 
@@ -97,9 +87,12 @@ class ReservationRestController {
     Collection<Reservation> reservations() {
         return this.reservationRepository.findAll();
     }
-
 }
 
+interface ReservationRepository extends JpaRepository<Reservation, Long> {
+
+    Collection<Reservation> findByReservationName(String rn);
+}
 
 @RestController
 @RefreshScope
@@ -112,8 +105,18 @@ class MessageRestController {
     }
 
     @GetMapping("/message")
-    String message() {
+    String read() {
         return this.value;
+    }
+}
+
+@Slf4j
+@Component
+class Listener {
+
+    @EventListener(RefreshScopeRefreshedEvent.class)
+    public void onRefresh(RefreshScopeRefreshedEvent evt) {
+        log.info("refresh!");
     }
 }
 
@@ -122,28 +125,19 @@ class CustomHealthIndicator implements HealthIndicator {
 
     @Override
     public Health health() {
-        return Health.status("I <3 Target!!!").build();
+        return Health.status("I <3 Production!!!").build();
     }
 }
 
-interface ReservationRepository extends JpaRepository<Reservation, Long> {
-
-    Collection<Reservation> findByReservationName(String rn);
-}
-
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
 @Entity
 class Reservation {
-
-    public Reservation(String reservationName) {
-        this.reservationName = reservationName;
-    }
 
     @Id
     @GeneratedValue
     private Long id;
 
-    private String reservationName; // reservation_name
+    private String reservationName;
 }

@@ -1,6 +1,5 @@
 package com.example.reservationservice;
 
-
 import com.jayway.restassured.module.mockmvc.RestAssuredMockMvc;
 import org.junit.Before;
 import org.junit.runner.RunWith;
@@ -12,26 +11,25 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
 
-@SpringBootTest (classes = ReservationServiceApplication.class)
+/**
+ * @author <a href="mailto:josh@joshlong.com">Josh Long</a>
+ */
+
+@SpringBootTest(classes = ReservationServiceApplication.class)
 @RunWith(SpringRunner.class)
 public class BaseClass {
 
-    @MockBean
-    private ReservationRepository reservationRepository ;
-
     @Autowired
-    private ReservationRestController reservationRestController ;
+    private ReservationRestController controller;
+
+    @MockBean
+    private ReservationRepository reservationRepository;
 
     @Before
-    public void before () throws Throwable {
-        RestAssuredMockMvc.standaloneSetup(
-                this.reservationRestController);
+    public void before() throws Exception {
+        Mockito.when(this.reservationRepository.findAll()).thenReturn(Arrays.asList(new Reservation(1L, "Jane"),
+                new Reservation(2L, "Joe")));
 
-        Mockito.when(this.reservationRepository.findAll())
-                .thenReturn(Arrays.asList(new Reservation(1L, "Dan"),
-                        new Reservation(2L, "Jane")));
-
-
+        RestAssuredMockMvc.standaloneSetup(this.controller);
     }
-
 }

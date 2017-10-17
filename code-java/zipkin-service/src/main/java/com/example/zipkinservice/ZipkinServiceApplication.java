@@ -10,7 +10,7 @@ import zipkin.server.EnableZipkinServer;
 @SpringBootApplication
 public class ZipkinServiceApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(ZipkinServiceApplication.class, args);
-    }
+	public static void main(String[] args) {
+		SpringApplication.run(ZipkinServiceApplication.class, args);
+	}
 }
